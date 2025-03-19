@@ -11,7 +11,6 @@ const ExpenseSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: true
     },
     itinerary: {
         type: mongoose.Schema.Types.ObjectId,
