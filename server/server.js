@@ -4,7 +4,6 @@ const cors = require('cors');
 const connectDB = require('./config/db.config');
 const app = express();
 
-console.log(process.env.PORT)
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -15,6 +14,7 @@ app.use('/api/itineraries', require('./routes/itinerary.routes'));
 app.use('/api/destinations', require('./routes/destination.routes'));
 app.use('/api/activities', require('./routes/activity.routes'));
 app.use('/api/expenses', require('./routes/expense.routes'));
+app.use('/api/packing', require('./routes/packing.routes'));
 
 app.listen(PORT, () => {
     connectDB();

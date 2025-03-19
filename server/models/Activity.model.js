@@ -4,7 +4,6 @@ const ActivitySchema = new mongoose.Schema({
     name: String,
     type: String,
     date: Date,
-    time: String,
     destination: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Destination'

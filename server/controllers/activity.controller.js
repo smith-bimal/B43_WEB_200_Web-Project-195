@@ -1,9 +1,9 @@
 const Activity = require('../models/Activity.model');
 
 exports.createActivity = async (req, res) => {
-  const { name, type, date, time, destination, itinerary } = req.body;
+  const { name, type, date, destination, itinerary } = req.body;
   try {
-    const activity = new Activity({ name, type, date, time, destination, itinerary });
+    const activity = new Activity({ name, type, date, destination, itinerary });
     await activity.save();
     res.status(201).json(activity);
   } catch (error) {

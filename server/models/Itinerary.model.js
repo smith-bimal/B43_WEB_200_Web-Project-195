@@ -6,6 +6,18 @@ const ItinerarySchema = new mongoose.Schema({
     ref: 'User'
   },
   title: String,
+  startDate: Date,
+  endDate: Date,
+  description: String,
+  amount_spent: {
+    type: Number,
+    default: 0
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'active', 'completed'],
+    default: 'pending'
+  },
   destinations: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Destination'
