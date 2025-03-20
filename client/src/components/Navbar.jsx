@@ -13,9 +13,9 @@ const Navbar = () => {
         navigate('/register');
     };
     return (
-        <header className="flex justify-between items-center py-4  mx-auto">
+        <header className="flex justify-between items-center mx-auto py-4">
             <img src="logo_light.png" alt="" className='h-16' />
-            <nav className="space-x-12 hidden md:flex">
+            <nav className="hidden md:flex space-x-12">
                 <a className="text-gray-700" href="#">
                     About us
                 </a>
