@@ -13,6 +13,7 @@ function App() {
     //   <Route path="/register" element={<Auth isLogin={false} />} />
     //   <Route path="/dashboard" element={<Dashboard />} />
     //   <Route path="/itinerary/:id" element={<Itinerary />} />
+    //   <Route path="/dashboard" element={<Test />} />
     // </Routes>
     <Test />
   );
