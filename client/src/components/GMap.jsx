@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, LoadScript, DirectionsService, DirectionsRenderer, Marker } from '@react-google-maps/api';
 
 const containerStyle = {
@@ -6,17 +6,10 @@ const containerStyle = {
   height: '400px'
 };
 
-const center = {
+const defaultCenter = {
   lat: 27.7172,
   lng: 85.3240
 };
-
-const destinations = [
-  { lat: 27.7172, lng: 85.3240 },
-  { lat: 28.2096, lng: 83.9856 },
-  { lat: 27.5291, lng: 84.3542 },
-  { lat: 27.9881, lng: 86.9250 }
-];
 
 const mapStyles = [
   {
@@ -71,63 +64,100 @@ const mapStyles = [
   }
 ];
 
-const GMap = () => {
+const GMap = ({ destinations = [] }) => {
+  const [center, setCenter] = useState(defaultCenter);
+  const [directions, setDirections] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const directionsServiceRef = useRef(null);
   const directionsRendererRef = useRef(null);
-  const [directions, setDirections] = useState(null);
 
-  useEffect(() => {
-    if (directionsServiceRef.current && directionsRendererRef.current) {
-      const waypoints = destinations.slice(1, -1).map(location => ({ location, stopover: true }));
-      directionsServiceRef.current.route(
-        {
-          origin: destinations[0],
-          destination: destinations[destinations.length - 1],
-          waypoints,
-          travelMode: 'DRIVING'
-        },
-        (result, status) => {
-          if (status === 'OK') {
-            setDirections(result);
-          } else {
-            console.error(`error fetching directions ${result}`);
-          }
-        }
-      );
-    }
+  const handleApiLoaded = useCallback(() => {
+    setIsLoaded(true);
   }, []);
 
+  useEffect(() => {
+    if (destinations.length > 0) {
+      // Set center to first destination
+      setCenter({
+        lat: destinations[0].latitude,
+        lng: destinations[0].longitude
+      });
+
+      // If there are multiple destinations, calculate route
+      if (destinations.length > 1) {
+        const waypoints = destinations.slice(1, -1).map(location => ({
+          location: { lat: location.latitude, lng: location.longitude },
+          stopover: true
+        }));
+
+        const request = {
+          origin: { lat: destinations[0].latitude, lng: destinations[0].longitude },
+          destination: {
+            lat: destinations[destinations.length - 1].latitude,
+            lng: destinations[destinations.length - 1].longitude
+          },
+          waypoints,
+          travelMode: 'DRIVING'
+        };
+
+        if (directionsServiceRef.current) {
+          directionsServiceRef.current.route(request, (result, status) => {
+            if (status === 'OK') {
+              setDirections(result);
+            } else {
+              console.error('Directions request failed:', status);
+            }
+          });
+        }
+      }
+    }
+  }, [destinations]);
+
   return (
-    <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAP_API_KEY}>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={10}
-        options={{
-          mapTypeControl: false,
-          streetViewControl: false,
-          styles: mapStyles
-        }}
-      >
-        {destinations.map((destination, index) => (
-          <Marker key={index} position={destination} />
-        ))}
-        {directions && (
-          <DirectionsRenderer
-            directions={directions}
-            options={{
-              polylineOptions: {
-                strokeColor: '#000000',
-                strokeOpacity: 0.8,
-                strokeWeight: 6
-              }
-            }}
-            onLoad={directionsRenderer => {
-              directionsRendererRef.current = directionsRenderer;
-            }}
-          />
-        )}
-      </GoogleMap>
+    <LoadScript 
+      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAP_API_KEY}
+      onLoad={handleApiLoaded}
+      loadingElement={<div>Loading...</div>}
+    >
+      {isLoaded && (
+        <GoogleMap
+          mapContainerStyle={containerStyle}
+          center={center}
+          zoom={destinations.length === 1 ? 12 : 6}
+          options={{
+            mapTypeControl: false,
+            streetViewControl: false,
+            styles: mapStyles
+          }}
+        >
+          {destinations.map((destination, index) => (
+            <Marker
+              key={destination._id || index}
+              position={{
+                lat: destination.latitude,
+                lng: destination.longitude
+              }}
+              title={destination.name}
+            />
+          ))}
+          
+          {directions && (
+            <DirectionsRenderer
+              directions={directions}
+              options={{
+                polylineOptions: {
+                  strokeColor: '#000000',
+                  strokeOpacity: 0.8,
+                  strokeWeight: 6
+                }
+              }}
+              onLoad={directionsRenderer => {
+                directionsRendererRef.current = directionsRenderer;
+              }}
+            />
+          )}
+        </GoogleMap>
+      )}
     </LoadScript>
   );
 };

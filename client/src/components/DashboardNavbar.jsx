@@ -1,8 +1,11 @@
-import { useState } from 'react'
-import { NavLink } from 'react-router'
+import { useState } from 'react';
+import { NavLink } from 'react-router';
+import { useAuth } from './AuthProvider';
 
 const DashboardNavbar = () => {
     const [activeNav, setActiveNav] = useState({ dashboard: true, trips: false, archives: false });
+    const { user, logout } = useAuth();
+    const [showUserMenu, setShowUserMenu] = useState(false);
 
     return (
         <nav className='flex justify-between items-center'>
@@ -30,10 +33,31 @@ const DashboardNavbar = () => {
             <div className="flex justify-center gap-2 items-center">
                 <div className="flex border-2 border-gray-200 h-14 justify-center rounded-full text-2xl w-14 cursor-pointer hover:scale-105 items-center"><i className="fa-bell fa-regular"></i></div>
                 <div className="flex border-2 border-gray-200 h-14 justify-center rounded-full text-2xl w-14 cursor-pointer hover:scale-105 items-center"><i className="fa-envelope fa-regular"></i></div>
-                <div className="flex border-2 border-gray-200 h-14 justify-center rounded-full text-2xl w-14 cursor-pointer hover:scale-105 items-center"><img src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg" alt="" className='h-full rounded-full w-full object-cover' /></div>
+                <div className="relative">
+                    <div
+                        className="flex border-2 border-gray-200 h-14 justify-center rounded-full text-2xl w-14 cursor-pointer hover:scale-105 items-center"
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                    >
+                        <img
+                            src="https://imgs.search.brave.com/8ylarQ0Xf9DIrDR0ypzj4DPdPWmPmoUhgkhi4SwM8gw/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvNTE3/OTk4MjY0L3ZlY3Rv/ci9tYWxlLXVzZXIt/aWNvbi5qcGc_cz02/MTJ4NjEyJnc9MCZr/PTIwJmM9NFJNaHFJ/WGNKTWNGa1JKUHE2/SzhoN296dVVvWmhQ/d0tuaUVrZTZLWWFf/az0"
+                            alt=""
+                            className='h-full rounded-full w-full object-cover'
+                        />
+                    </div>
+                    {showUserMenu && (
+                        <div className="bg-white border border-[#f5f5f5] rounded-md shadow-lg w-48 absolute mt-2 py-1 right-0 z-10">
+                            <button
+                                onClick={logout}
+                                className="text-gray-700 text-left text-sm w-full block cursor-pointer hover:bg-gray-100 px-4 py-2"
+                            >
+                                Sign out
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </nav>
     )
 }
 
-export default DashboardNavbar
+export default DashboardNavbar;
