@@ -9,7 +9,7 @@ const ItinerarySchema = new mongoose.Schema({
   startDate: Date,
   endDate: Date,
   description: String,
-  amount_spent: {
+  budget: {
     type: Number,
     default: 0
   },
@@ -34,6 +34,16 @@ const ItinerarySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+});
+
+// Add a pre-save middleware to update amount_spent
+ItinerarySchema.pre('save', async function(next) {
+  if (this.isModified('expenses')) {
+    const Expense = mongoose.model('Expense');
+    const expenses = await Expense.find({ _id: { $in: this.expenses } });
+    this.amount_spent = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  }
+  next();
 });
 
 module.exports = mongoose.model('Itinerary', ItinerarySchema);

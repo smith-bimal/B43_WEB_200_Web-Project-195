@@ -1,10 +1,18 @@
 const Expense = require('../models/Expense.model');
+const Itinerary = require('../models/Itinerary.model');
 
 exports.createExpense = async (req, res) => {
-  const { category, amount, description, itinerary } = req.body;
+  const { title, amount, itinerary } = req.body;
   try {
-    const expense = new Expense({ category, amount, description, itinerary });
+    const expense = new Expense({ title, amount, itinerary });
     await expense.save();
+
+    // Add expense to itinerary's expenses array
+    await Itinerary.findByIdAndUpdate(
+      itinerary,
+      { $push: { expenses: expense._id } }
+    );
+
     res.status(201).json(expense);
   } catch (error) {
     res.status(500).json({ error: error.message });

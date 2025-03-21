@@ -4,10 +4,7 @@ const ActivitySchema = new mongoose.Schema({
     name: String,
     type: String,
     date: Date,
-    destination: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Destination'
-    },
+    descriptions: [String],
     itinerary: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Itinerary'
