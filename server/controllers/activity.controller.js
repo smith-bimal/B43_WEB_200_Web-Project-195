@@ -1,10 +1,18 @@
 const Activity = require('../models/Activity.model');
+const Itinerary = require('../models/Itinerary.model');
 
 exports.createActivity = async (req, res) => {
   const { name, type, date, destination, itinerary } = req.body;
   try {
     const activity = new Activity({ name, type, date, destination, itinerary });
     await activity.save();
+    
+    // Add activity to itinerary's activities array
+    await Itinerary.findByIdAndUpdate(
+      itinerary,
+      { $push: { activities: activity._id } }
+    );
+
     res.status(201).json(activity);
   } catch (error) {
     res.status(500).json({ error: error.message });

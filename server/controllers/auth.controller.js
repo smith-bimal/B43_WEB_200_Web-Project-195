@@ -15,7 +15,9 @@ exports.register = async (req, res) => {
     await user.save();
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.status(201).json({ token, message: 'User registered successfully' });
+    const userData = user.toObject();
+    delete userData.password;
+    res.status(201).json({ token, user: userData });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -31,7 +33,21 @@ exports.login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
+    const userData = user.toObject();
+    delete userData.password;
+    res.json({ token, user: userData });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

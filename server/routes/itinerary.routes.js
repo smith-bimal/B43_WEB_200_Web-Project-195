@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/auth.middleware');
 router.post('/', authMiddleware, itineraryController.createItinerary);
 router.get('/', authMiddleware, itineraryController.getItineraries);
 router.get('/:id', authMiddleware, itineraryController.getItinerary);
+router.get('/:id/full', authMiddleware, itineraryController.getFullItineraryData);
 router.put('/:id', authMiddleware, itineraryController.updateItinerary);
 router.delete('/:id', authMiddleware, itineraryController.deleteItinerary);
 
