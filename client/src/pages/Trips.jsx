@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import axios from '../config/axios';
 
-function Itinerary() {
+function Trips() {
   const { id } = useParams();
   const [itinerary, setItinerary] = useState(null);
 
@@ -21,11 +21,10 @@ function Itinerary() {
   if (!itinerary) return <div>Loading...</div>;
 
   return (
-    <div className="itinerary p-8">
-      <h1 className="text-4xl font-bold mb-4 text-orange-500">{itinerary.title}</h1>
-      {/* Add components for activities, destinations, and expenses here */}
+    <div className="p-8 itinerary">
+      <h1 className="text-4xl text-orange-500 font-bold mb-4">{itinerary.title}</h1>
     </div>
   );
 }
 
-export default Itinerary;
+export default Trips;

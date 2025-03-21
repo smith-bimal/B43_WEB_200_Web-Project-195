@@ -9,5 +9,15 @@ p {
 }
 
 .animate-spin-slow {
-    animation: spin 2.5s linear infinite;
+  animation: spin 2.5s linear infinite;
+}
+
+::-webkit-scrollbar {
+  appearance: none;
+  width: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background-color: rgba(56, 63, 99, 0.411);
 }
