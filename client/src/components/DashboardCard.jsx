@@ -8,7 +8,7 @@ const DashboardCard = ({ heading, icon, bg, children }) => {
     };
 
     return (
-        <div className={`p-6 rounded-3xl shadow-sm h-full relative ${bg}`}>
+        <div className={`p-6 rounded-3xl shadow-sm h-full min-h-[350px] sm:min-h-[300px] relative ${bg}`}>
             <div className='flex justify-between items-center mb-4'>
                 <h2 className="text-xl font-semibold"><i className={`${icon} mr-2`}></i>{heading}</h2>
                 <div

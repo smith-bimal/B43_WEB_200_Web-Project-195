@@ -92,12 +92,11 @@ const Archive = () => {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Keep existing return JSX structure, but update the card rendering:
   return (
-    <div className="p-8">
+    <div className="min-h-screen p-2 sm:p-4 md:p-8">
       <DashboardNavbar />
-      <div className="p-8 mt-4 mx-auto">
-        <div className="bg-gray-800 p-8 rounded-3xl shadow-sm text-white mb-8 overflow-hidden relative h-[200px] flex items-center">
+      <div className="sm:p-4 md:p-8 mt-4 mx-auto">
+        <div className="bg-gray-800 p-4 md:p-8 rounded-3xl shadow-sm text-white mb-8 overflow-hidden relative h-[200px] flex items-center">
           <img
             src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=1400"
             alt=""
@@ -116,7 +115,7 @@ const Archive = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <div className="relative">
@@ -133,13 +132,13 @@ const Archive = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => handleSort("country")}
-                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium"
+                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium whitespace-nowrap"
               >
                 Country {sortField === "country" && <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>}
               </button>
               <button
                 onClick={() => handleSort("startDate")}
-                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium"
+                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium whitespace-nowrap"
               >
                 Date {sortField === "startDate" && <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>}
               </button>

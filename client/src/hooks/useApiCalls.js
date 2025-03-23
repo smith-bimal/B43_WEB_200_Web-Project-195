@@ -55,3 +55,8 @@ export const addItinerary = (data) => {
 export const deleteItinerary = (id) => {
     return instance.delete(`/itineraries/${id}`);
 }
+
+export const updateItinerary = async (id, data) => {
+    const response = await instance.put(`/itineraries/${id}`, data);
+    return response.data;
+};

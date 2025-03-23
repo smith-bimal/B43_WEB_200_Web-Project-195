@@ -15,25 +15,21 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Auth isLogin={true} />} />
         <Route path="/register" element={<Auth isLogin={false} />} />
-        {/* <Route path="/dashboard" element={
+        <Route path="/dashboard" element={
           <ProtectedRoute>
-          <Dashboard />
+            <Dashboard />
           </ProtectedRoute>
-          } />
-          <Route path="/trips" element={
-            <ProtectedRoute>
+        } />
+        <Route path="/trips" element={
+          <ProtectedRoute>
             <Trips />
-            </ProtectedRoute>
-            } />
-            <Route path="/archive" element={
-              <ProtectedRoute>
-              <Archive />
-              </ProtectedRoute>
-              } /> */}
-        <Route path="/test" element={<Test />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/trips" element={<Trips />} />
-        <Route path="/archive" element={<Archive />} />
+          </ProtectedRoute>
+        } />
+        <Route path="/archive" element={
+          <ProtectedRoute>
+            <Archive />
+          </ProtectedRoute>
+        } />
       </Routes>
     </AuthProvider>
   );

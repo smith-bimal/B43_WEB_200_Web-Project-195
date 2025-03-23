@@ -12,6 +12,8 @@ import ActivityTask from "../components/ActivityTask";
 import { useItineraryData } from '../hooks/useItineraryData';
 import instance from '../config/axios';
 import { addExpense, addPackings, addTasks, deleteExpense, deletePacking, updateBudget, updateExpense, updatePacking, updateTask } from "../hooks/useApiCalls";
+import DownloadPDFButton from "../components/DownloadPDFButton";
+import PDFErrorBoundary from '../components/PDFErrorBoundary';
 
 const Dashboard = () => {
   const { data: allData, loading, error } = useItineraryData();
@@ -34,6 +36,51 @@ const Dashboard = () => {
       setData(filteredData);
     }
   }, [allData]);
+
+  // Add new useEffect for handling localStorage and initial itinerary selection
+  useEffect(() => {
+    if (data && data.length > 0) {
+      // Try to get previously selected itinerary from localStorage
+      const savedItineraryId = localStorage.getItem('selectedItineraryId');
+      let initialItinerary;
+
+      if (savedItineraryId) {
+        // Find the saved itinerary in the current data
+        initialItinerary = data.find(it => it._id === savedItineraryId);
+      }
+
+      // If no saved itinerary found or it doesn't exist in current data, use first one
+      if (!initialItinerary) {
+        initialItinerary = data[0];
+        // Update localStorage with the new selection
+        localStorage.setItem('selectedItineraryId', initialItinerary._id);
+      }
+
+      // Set the selected itinerary and initialize related states
+      setSelectedItinerary(initialItinerary);
+      setTempBudget(initialItinerary.budget);
+      setExpenses(initialItinerary.expenses);
+      setTotalSpent(initialItinerary.expenses.reduce((acc, curr) => acc + curr.amount, 0));
+      setDestination({
+        latitude: initialItinerary.destination?.coordinates?.latitude || 0,
+        longitude: initialItinerary.destination?.coordinates?.longitude || 0
+      });
+      setActivities(initialItinerary.activities || []);
+      setPackingItems(initialItinerary.packings || []);
+
+      // Set date range
+      if (initialItinerary.startDate && initialItinerary.endDate) {
+        const startDateObj = new Date(initialItinerary.startDate);
+        const endDateObj = new Date(initialItinerary.endDate);
+        setRange({
+          from: startDateObj,
+          to: endDateObj
+        });
+        setStartDate(startDateObj);
+        setEndDate(endDateObj);
+      }
+    }
+  }, [data]);
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedItinerary, setSelectedItinerary] = useState(null);
@@ -63,35 +110,6 @@ const Dashboard = () => {
   const [isAddingPackingItem, setIsAddingPackingItem] = useState(false);
   const [editingPackingItem, setEditingPackingItem] = useState(null);
   const [newPackingItem, setNewPackingItem] = useState({ item: '' });
-
-  // Move initialization logic to useEffect
-  useEffect(() => {
-    if (data && data.length > 0) {
-      const initialItinerary = data[0];
-      setSelectedItinerary(initialItinerary);
-      setTempBudget(initialItinerary.budget);
-      setExpenses(initialItinerary.expenses);
-      setTotalSpent(initialItinerary.expenses.reduce((acc, curr) => acc + curr.amount, 0));
-      setDestination({
-        latitude: initialItinerary.destination?.coordinates?.latitude || 0,
-        longitude: initialItinerary.destination?.coordinates?.longitude || 0
-      });
-      setActivities(initialItinerary.activities || []);
-      setPackingItems(initialItinerary.packings || []);
-
-      // Set date range
-      if (initialItinerary.startDate && initialItinerary.endDate) {
-        const startDateObj = new Date(initialItinerary.startDate);
-        const endDateObj = new Date(initialItinerary.endDate);
-        setRange({
-          from: startDateObj,
-          to: endDateObj
-        });
-        setStartDate(startDateObj);
-        setEndDate(endDateObj);
-      }
-    }
-  }, [data]);
 
   const calculateTripStatus = useCallback(() => {
     if (!startDate || !endDate) return;
@@ -166,6 +184,7 @@ const Dashboard = () => {
     const selected = data?.find(it => it._id === id);
     if (selected) {
       setSelectedItinerary(selected);
+      localStorage.setItem('selectedItineraryId', selected._id);  // Save to localStorage
       setTempBudget(selected.budget);
       setExpenses(selected.expenses);
       setTotalSpent(selected.expenses.reduce((acc, curr) => acc + curr.amount, 0));
@@ -500,27 +519,42 @@ const Dashboard = () => {
   }
 
   return (
-    <main className="p-8">
+    <main className="p-2 sm:p-4 md:p-8">
       <DashboardNavbar />
-      <div className="p-4 mt-8 mx-auto">
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-8 md:grid-cols-2">
-          <div className="col-span-1 bg-gray-800 p-6 rounded-3xl shadow-sm text-white lg:col-span-3 overflow-hidden relative">
+      {selectedItinerary && (
+        <PDFErrorBoundary>
+          <DownloadPDFButton 
+            activities={activities}
+            packingItems={packingItems}
+            tripName={selectedItinerary.title}
+            destination={selectedItinerary.destination?.name}
+            dates={{ startDate: selectedItinerary.startDate, endDate: selectedItinerary.endDate }}
+            budget={selectedItinerary.expenses}
+          />
+        </PDFErrorBoundary>
+      )}
+      <div className="sm:p-2 md:p-4 lg:p-8 mt-4 mx-auto">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-8">
+          {/* Welcome Card - Full width on mobile, 3 cols on large screens */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gray-800 p-4 sm:p-6 rounded-3xl shadow-sm text-white overflow-hidden relative min-h-[250px] sm:min-h-[300px]">
             <img
               src="https://cdn.pixabay.com/photo/2019/08/12/17/11/asphalt-road-4401704_960_720.jpg"
               alt=""
-              className="w-full -translate-x-1/2 -translate-y-1/2 absolute blur-[5px] brightness-50 left-1/2 top-1/2 z-0"
+              className="w-full h-full object-cover -translate-x-1/2 -translate-y-1/2 absolute blur-[5px] brightness-50 left-1/2 top-1/2 z-0"
             />
-            <div className="flex justify-between items-center mb-4 relative">
-              <h2 className="text-xl font-semibold"><i className="fa-paper-plane fa-solid mr-2"></i>YOUR TRIP</h2>
-              <span className="relative">
+            {/* Trip selection header - Stack on small screens */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 relative gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold"><i className="fa-paper-plane fa-solid mr-2"></i>YOUR TRIP</h2>
+              <span className="relative w-full sm:w-auto">
                 <span
-                  className="bg-gray-700 rounded-full text-white cursor-pointer px-4 py-1"
+                  className="bg-gray-700 rounded-full text-white cursor-pointer px-4 py-1 block text-center sm:inline-block"
                   onClick={toggleDropdown}
                 >
-                  {data?.title || 'Select Trip'} <i className="fa-angle-down fa-solid"></i>
+                  {selectedItinerary?.title || 'Select Trip'} <i className="fa-angle-down fa-solid"></i>
                 </span>
+                {/* Dropdown positioning */}
                 {showDropdown && (
-                  <ul className="bg-white rounded-lg shadow-lg text-black absolute mt-2 overflow-hidden z-20">
+                  <ul className="bg-white rounded-lg shadow-lg text-black absolute right-0 mt-2 w-full sm:w-48 z-20">
                     {data.map((it) => (
                       <li
                         key={it._id}
@@ -534,26 +568,26 @@ const Dashboard = () => {
                 )}
               </span>
             </div>
-            <div className="text-2xl font-bold mb-2 relative z-10">
+            {/* Welcome text - Responsive font sizes */}
+            <div className="text-xl sm:text-2xl font-bold mb-2 relative z-10 line-clamp-2">
               Hey {selectedItinerary?.user?.name || 'there'} 👋
             </div>
-            <div className="text-lg relative z-10">
-              {selectedItinerary?.description ? `Welcome To Your "${selectedItinerary?.description}" Adventure!` : 'Select a trip to get started'}
+            <div className="text-base sm:text-lg relative z-10 line-clamp-2">
+              {selectedItinerary?.description}
             </div>
-            <br />
-            <div className="text-sm relative z-10">
-              <span className="text-5xl font-bold">{selectedItinerary?.title}</span>
-            </div>
-            <div className="text-gray-400 text-sm absolute bottom-4 z-10">
-              The journey of a thousand miles begins with planning and preparation.
+            <div className="text-sm relative z-10 mt-4">
+              <span className="text-3xl sm:text-5xl font-bold line-clamp-1">{selectedItinerary?.title}</span>
             </div>
           </div>
 
-          <div className="col-span-3 grid grid-cols-2 gap-4">
+          {/* Budget and Expenses Grid - Stack on mobile, 2 columns on tablet+ */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Budget Card */}
             <DashboardCard
               heading={"BUDGET"}
               icon={"fa-chart-pie fa-solid"}
               bg={"bg-[#f5f5f5]"}
+              className="min-h-[200px] sm:min-h-[250px]"
             >
               {(isExpanded) => (
                 <div>
@@ -586,6 +620,7 @@ const Dashboard = () => {
               )}
             </DashboardCard>
 
+            {/* Expenses Card */}
             <DashboardCard
               heading={"EXPENSES"}
               icon={"fa-file-invoice fa-solid"}
@@ -688,11 +723,13 @@ const Dashboard = () => {
             </DashboardCard>
           </div>
 
-          <div className="col-span-2">
+          {/* Calendar Card - Full width on mobile */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-2">
             <DashboardCard
               heading={"READINESS"}
               icon={"fa-hourglass-half fa-solid"}
               bg={"bg-blue-100"}
+              className="min-h-[250px] sm:min-h-[300px]"
             >
               {(isExpanded) => (
                 <div className="flex flex-col items-center">
@@ -730,19 +767,24 @@ const Dashboard = () => {
             </DashboardCard>
           </div>
 
-          <div className="bg-[#f5f5f5] p-6 rounded-3xl shadow-sm lg:col-span-3 relative">
-            <h2 className="text-xl font-semibold mb-4">
+          {/* Map Component - Full width on mobile */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-[#f5f5f5] p-4 sm:p-6 rounded-3xl shadow-sm relative min-h-[300px]">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4">
               <i className="fa-location-crosshairs fa-solid mr-2"></i>
               DESTINATION
             </h2>
-            <GMap destinations={destination} />
+            <div className="h-fit">
+              <GMap destinations={destination} />
+            </div>
           </div>
 
-          <div className="col-span-1 lg:col-span-3 min-h-[400px]">
+          {/* Activities Card - Full width on mobile */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3">
             <DashboardCard
               heading={"ACTIVITY"}
               icon={"fa-person-walking fa-solid"}
               bg={"bg-amber-100"}
+              className="min-h-[400px]"
             >
               {(isExpanded) => (
                 <div>
@@ -871,11 +913,13 @@ const Dashboard = () => {
             </DashboardCard>
           </div>
 
-          <div className="col-span-2 text-white">
+          {/* Packing List - Full width on mobile */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-2 text-white">
             <DashboardCard
               heading={"PACKING LIST"}
               icon={"fa-list fa-solid"}
               bg={"bg-gray-800"}
+              className="min-h-[400px]"
             >
               {(isExpanded) => (
                 <div className="flex flex-col h-full justify-between">
