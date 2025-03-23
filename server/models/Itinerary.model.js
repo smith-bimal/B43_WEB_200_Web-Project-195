@@ -45,8 +45,10 @@ ItinerarySchema.methods.updateStatusBasedOnDates = function() {
   const currentDate = new Date();
   if (this.endDate && currentDate > this.endDate) {
     this.status = 'completed';
-  } else if (this.startDate && currentDate >= this.startDate && currentDate <= this.endDate) {
+  } else if (this.startDate && currentDate >= this.startDate && (!this.endDate || currentDate <= this.endDate)) {
     this.status = 'active';
+  } else if (this.startDate && currentDate < this.startDate) {
+    this.status = 'pending';
   }
 };
 

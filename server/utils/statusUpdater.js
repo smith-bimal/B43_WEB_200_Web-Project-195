@@ -2,16 +2,27 @@ const Itinerary = require('../models/Itinerary.model');
 
 async function updateItineraryStatuses() {
   try {
+    const currentDate = new Date();
+
     const itineraries = await Itinerary.find({
-      status: { $ne: 'completed' },
-      endDate: { $lte: new Date() }
+      $or: [
+        { status: 'pending' },
+        { status: 'active' }
+      ]
     });
 
+    let updatedCount = 0;
     for (const itinerary of itineraries) {
-      itinerary.status = 'completed';
-      await itinerary.save();
+      const oldStatus = itinerary.status;
+      itinerary.updateStatusBasedOnDates();
+      
+      if (oldStatus !== itinerary.status) {
+        await itinerary.save();
+        updatedCount++;
+      }
     }
-    console.log(`Updated ${itineraries.length} itineraries to completed status`);
+
+    console.log(`Updated ${updatedCount} itineraries status`);
   } catch (error) {
     console.error('Error updating itinerary statuses:', error);
   }

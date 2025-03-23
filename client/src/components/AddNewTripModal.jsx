@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { LoadScript, StandaloneSearchBox } from '@react-google-maps/api';
 import instance from '../config/axios';
 import { addDestination, addItinerary } from '../hooks/useApiCalls';
+import { getTripStatus } from '../utils/tripStatus';
 
 const libraries = ["places"];
 
@@ -66,13 +67,17 @@ const AddNewTripModal = ({ onClose }) => {
         setError('');
 
         try {
-            // First create the itinerary
+            // Calculate initial status based on dates
+            const status = getTripStatus(formData.startDate, formData.endDate);
+
+            // Create the itinerary with status
             const itineraryResponse = await addItinerary({
                 title: formData.title,
                 description: formData.description,
                 startDate: formData.startDate,
                 endDate: formData.endDate,
-                budget: parseFloat(formData.budget)
+                budget: parseFloat(formData.budget),
+                status
             });
 
             // Then create the destination

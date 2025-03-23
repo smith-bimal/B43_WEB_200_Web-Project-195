@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable no-unused-vars */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import axios from '../config/axios';
@@ -69,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
+        localStorage.clear();
         navigate('/login', { replace: true });
     };
 

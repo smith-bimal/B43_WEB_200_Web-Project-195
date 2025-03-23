@@ -17,16 +17,15 @@ const DashboardNavbar = () => {
         }
     }, []);
 
-
-    const { user, logout } = useAuth();
+    const { logout } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
 
     return (
-        <nav className='flex justify-between items-center'>
-            <img src="logo_light.png" className='h-12' alt="logo" />
+        <nav className='flex flex-col md:flex-row justify-between items-center'>
+            <img src="logo_light.png" className='h-12 mb-4 md:mb-0' alt="logo" />
 
-            <div className="flex justify-center gap-2 items-center">
-                <div className="flex bg-gray-100 border-2 border-gray-200 h-14 rounded-full gap-12 items-center px-6 relative">
+            <div className="flex flex-col md:flex-row justify-center gap-2 items-center mb-4 md:mb-0">
+                <div className="flex bg-gray-100 border-2 border-gray-200 h-10 md:h-14 rounded-full gap-12 items-center px-4 md:px-6 relative">
                     <div className={`w-1/3 absolute bg-[#1E2939] border-2 scale-y-115 border-[#1E2939] h-full top-0 rounded-full z-0 ${activeNav.dashboard ? "left-0" : activeNav.trips ? "left-[33%]" : "left-[67%]"}`}></div>
                     <NavLink className={`z-10 w-20 text-center ${activeNav.dashboard && "text-white"}`} to="/dashboard">
                         Dashboard
@@ -41,11 +40,11 @@ const DashboardNavbar = () => {
             </div>
 
             <div className="flex justify-center gap-2 items-center">
-                <div className="flex border-2 border-gray-200 h-14 justify-center rounded-full text-2xl w-14 cursor-pointer hover:scale-105 items-center"><i className="fa-bell fa-regular"></i></div>
-                <div className="flex border-2 border-gray-200 h-14 justify-center rounded-full text-2xl w-14 cursor-pointer hover:scale-105 items-center"><i className="fa-envelope fa-regular"></i></div>
+                <div className="flex border-2 border-gray-200 h-12 md:h-14 justify-center rounded-full text-xl md:text-2xl w-12 md:w-14 cursor-pointer hover:scale-105 items-center"><i className="fa-bell fa-regular"></i></div>
+                <div className="flex border-2 border-gray-200 h-12 md:h-14 justify-center rounded-full text-xl md:text-2xl w-12 md:w-14 cursor-pointer hover:scale-105 items-center"><i className="fa-envelope fa-regular"></i></div>
                 <div className="relative">
                     <div
-                        className="flex border-2 border-gray-200 h-14 justify-center rounded-full text-2xl w-14 cursor-pointer hover:scale-105 items-center"
+                        className="flex border-2 border-gray-200 h-12 md:h-14 justify-center rounded-full text-xl md:text-2xl w-12 md:w-14 cursor-pointer hover:scale-105 items-center"
                         onClick={() => setShowUserMenu(!showUserMenu)}
                     >
                         <img

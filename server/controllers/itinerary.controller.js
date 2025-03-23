@@ -1,4 +1,7 @@
 const Itinerary = require('../models/Itinerary.model');
+const Activity = require('../models/Activity.model');
+const Expense = require('../models/Expense.model');
+const Destination = require('../models/Destination.model');
 const Packing = require('../models/Packing.model');
 
 exports.createItinerary = async (req, res) => {
@@ -62,9 +65,19 @@ exports.updateItinerary = async (req, res) => {
 
 exports.deleteItinerary = async (req, res) => {
   try {
-    const itinerary = await Itinerary.findByIdAndDelete(req.params.id);
+    const itinerary = await Itinerary.findById(req.params.id);
     if (!itinerary) return res.status(404).json({ message: 'Itinerary not found' });
-    res.json({ message: 'Itinerary deleted successfully' });
+
+    if (itinerary.destination) {
+      await Destination.findByIdAndDelete(itinerary.destination);
+    }
+
+    await Activity.deleteMany({ itinerary: itinerary._id });
+    await Expense.deleteMany({ itinerary: itinerary._id });
+    await Packing.deleteMany({ itinerary: itinerary._id });
+
+    await Itinerary.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Itinerary and all associated data deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

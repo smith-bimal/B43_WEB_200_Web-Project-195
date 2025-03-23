@@ -4,6 +4,9 @@ import DashboardNavbar from '../components/DashboardNavbar';
 import AddNewTripModal from '../components/AddNewTripModal';
 import { deleteItinerary } from '../hooks/useApiCalls';
 import { useItineraryData } from '../hooks/useItineraryData';
+import { getTripStatus } from '../utils/tripStatus';
+import { updateItinerary } from '../hooks/useApiCalls';
+import { useNavigate } from 'react-router';
 
 function Trips() {
     const { data: allTrips, loading, error, refresh } = useItineraryData();
@@ -13,6 +16,7 @@ function Trips() {
     const [sortOrder, setSortOrder] = useState('asc');
     const [currentPage, setCurrentPage] = useState(1);
     const [viewTrip, setViewTrip] = useState(null);
+    const navigate = useNavigate();
 
     const tripsPerPage = 6;
 
@@ -41,7 +45,8 @@ function Trips() {
     };
 
     const handleViewTrip = (trip) => {
-        setViewTrip(trip);
+        localStorage.setItem('selectedItineraryId', trip._id);
+        navigate('/dashboard');
     };
 
     const formatDate = (dateString) => {
@@ -54,10 +59,22 @@ function Trips() {
         return formattedDay + ' ' + formattedMonth;
     };
 
-    // First, filter active and pending trips
-    const activeAndPendingTrips = (allTrips || []).filter(trip =>
-        trip.status === 'active' || trip.status === 'pending'
-    );
+    // First, filter active and pending trips and update status if needed
+    const activeAndPendingTrips = (allTrips || []).filter(trip => {
+        const currentStatus = getTripStatus(trip.startDate, trip.endDate);
+        
+        // If status needs updating
+        if (trip.status !== currentStatus) {
+            updateItinerary(trip._id, { status: currentStatus })
+                .then(() => {
+                    console.log(`Updated trip ${trip._id} status to ${currentStatus}`);
+                    refresh(); // Refresh the data after status update
+                })
+                .catch(err => console.error('Failed to update trip status:', err));
+        }
+        
+        return currentStatus === 'active' || currentStatus === 'pending';
+    });
 
     // Then, apply search filter if there's a search query
     const searchFilteredTrips = searchQuery
@@ -107,9 +124,9 @@ function Trips() {
 
 
     return (
-        <main className="min-h-screen p-8">
+        <main className="min-h-screen p-4 md:p-8">
             <DashboardNavbar />
-            <div className="p-8 mt-4 mx-auto">
+            <div className="sm:p-4 md:p-8 mt-4 mx-auto">
                 {/* Hero Section */}
                 <div className="bg-gray-800 p-8 rounded-3xl shadow-sm text-white mb-8 overflow-hidden relative h-[200px] flex items-center">
                     <img
@@ -148,13 +165,13 @@ function Trips() {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handleSort("country")}
-                                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium"
+                                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium whitespace-nowrap"
                             >
                                 Country {sortField === "country" && <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>}
                             </button>
                             <button
                                 onClick={() => handleSort("startDate")}
-                                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium"
+                                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium whitespace-nowrap"
                             >
                                 Date {sortField === "startDate" && <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>}
                             </button>
