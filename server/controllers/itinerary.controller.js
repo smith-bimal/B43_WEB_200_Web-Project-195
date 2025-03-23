@@ -14,7 +14,13 @@ exports.createItinerary = async (req, res) => {
 
 exports.getItineraries = async (req, res) => {
   try {
-    const itineraries = await Itinerary.find({ user: req.userId }).populate("activities").populate("destination").populate("expenses").populate("packings");
+    const itineraries = await Itinerary.find({ user: req.userId })
+      .populate('activities')
+      .populate('destination')
+      .populate('expenses')
+      .populate('packings')
+      .populate('user')
+      .populate('collaborators');
     res.json(itineraries);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -34,7 +40,7 @@ exports.getItinerary = async (req, res) => {
 exports.updateItinerary = async (req, res) => {
   try {
     const updates = { ...req.body };
-    
+
     if (updates.startDate) updates.startDate = new Date(updates.startDate);
     if (updates.endDate) updates.endDate = new Date(updates.endDate);
 
@@ -68,9 +74,10 @@ exports.getFullItineraryData = async (req, res) => {
   try {
     const itinerary = await Itinerary.findById(req.params.id)
       .populate('user')
-      .populate('destinations')
+      .populate('destination')
       .populate('activities')
       .populate('expenses')
+      .populate('packings')
       .populate('collaborators');
 
     if (!itinerary) {
@@ -78,18 +85,12 @@ exports.getFullItineraryData = async (req, res) => {
     }
 
     // Check if user has access to this itinerary
-    if (itinerary.user._id.toString() !== req.userId && 
-        !itinerary.collaborators.find(c => c._id.toString() === req.userId)) {
+    if (itinerary.user._id.toString() !== req.userId &&
+      !itinerary.collaborators.find(c => c._id.toString() === req.userId)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    // Also fetch packing items
-    const packingItems = await Packing.find({ itinerary: itinerary._id });
-
-    res.json({
-      ...itinerary.toObject(),
-      packingItems
-    });
+    res.json(itinerary);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

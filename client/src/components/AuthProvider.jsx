@@ -77,15 +77,17 @@ export const AuthProvider = ({ children }) => {
         <AuthContext.Provider value={{ login, register, logout }}>
             <AuthLoader>
                 {(user, setUser) => (
-                    <AuthContext.Provider value={{ user, setUser, login: async (...args) => {
-                        const result = await login(...args);
-                        if (result.success) setUser(result.user);
-                        return result;
-                    }, register: async (...args) => {
-                        const result = await register(...args);
-                        if (result.success) setUser(result.user);
-                        return result;
-                    }, logout }}>
+                    <AuthContext.Provider value={{
+                        user, setUser, login: async (...args) => {
+                            const result = await login(...args);
+                            if (result.success) setUser(result.user);
+                            return result;
+                        }, register: async (...args) => {
+                            const result = await register(...args);
+                            if (result.success) setUser(result.user);
+                            return result;
+                        }, logout
+                    }}>
                         {children}
                     </AuthContext.Provider>
                 )}

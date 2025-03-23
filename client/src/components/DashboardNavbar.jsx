@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router';
 import { useAuth } from './AuthProvider';
+import AddNewTripModal from './AddNewTripModal';
 
 const DashboardNavbar = () => {
     const [activeNav, setActiveNav] = useState({ dashboard: true, trips: false, archives: false });
+    const [showNewTripModal, setShowNewTripModal] = useState(false);
 
     useEffect(() => {
         if (window.location.pathname == "/dashboard") {
@@ -36,10 +38,6 @@ const DashboardNavbar = () => {
                         Archive
                     </NavLink>
                 </div>
-                <div className="flex border-2 border-indigo-200 h-14 justify-center rounded-full cursor-pointer duration-150 hover:bg-[#e0e7ff67] items-center px-4 relative transition-all">
-                    <div className="flex bg-indigo-100 h-8 justify-center rounded-full w-8 items-center mr-2"><i className="fa-plus fa-solid"></i></div>
-                    New Trip
-                </div>
             </div>
 
             <div className="flex justify-center gap-2 items-center">
@@ -68,6 +66,9 @@ const DashboardNavbar = () => {
                     )}
                 </div>
             </div>
+            {showNewTripModal && (
+                <AddNewTripModal onClose={() => setShowNewTripModal(false)} />
+            )}
         </nav>
     )
 }

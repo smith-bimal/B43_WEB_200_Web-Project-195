@@ -5,10 +5,8 @@ import Home from './pages/Home';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Archive from './pages/Archive';
-import Archives from './pages/Archives';
 import Trips from './pages/Trips';
 import Test from './pages/Test';
-import TripsCopy from './pages/TripsCopy';
 
 function App() {
   return (

@@ -1,0 +1,12 @@
+1. Update the itinerary status as per the date automatically
+2. ---------Show all the itineraries in the trips page---------
+3. ---------Update the archive page---------
+4. Make all the pages responsive
+5. redirect to the main page with the trip selected when clicked view more
+6. post deleting itinerary remove the packings, destinations, expenses, activities
+7. add option to get the pdf of the activity lists and packing lists
+8. Go to login page after signout
+9. ---------remove the completed itineraries from dashboard---------
+10. show activity lists are empty there is none
+11. ---------The dashboard should handle empty itineraries lists---------
+12. ---------fix the width of the trips as per archive---------

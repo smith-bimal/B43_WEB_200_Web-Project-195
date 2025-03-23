@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 
 const containerStyle = {
@@ -60,7 +60,7 @@ const mapStyles = [
 ];
 
 const GMap = ({ destinations }) => {
-  const [center, setCenter] = useState({ lat: 0, lng: 0 });
+  const [center, setCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Default to India's center
   const [isLoaded, setIsLoaded] = useState(false);
 
   const handleApiLoaded = useCallback(() => {
@@ -68,11 +68,12 @@ const GMap = ({ destinations }) => {
   }, []);
 
   useEffect(() => {
-    if (destinations) {
-      setCenter({
-        lat: Number(destinations.latitude),
-        lng: Number(destinations.longitude)
-      });
+    if (destinations && destinations.latitude && destinations.longitude) {
+      const lat = Number(destinations.latitude);
+      const lng = Number(destinations.longitude);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setCenter({ lat, lng });
+      }
     }
   }, [destinations]);
 
@@ -86,18 +87,18 @@ const GMap = ({ destinations }) => {
         <GoogleMap
           mapContainerStyle={containerStyle}
           center={center}
-          zoom={12}
+          zoom={10}
           options={{
             mapTypeControl: false,
             streetViewControl: false,
             styles: mapStyles
           }}
         >
-          {destinations?.coordinates && (
+          {destinations && destinations.latitude && destinations.longitude && (
             <Marker
               position={{
-                lat: Number(destinations.coordinates.latitude),
-                lng: Number(destinations.coordinates.longitude)
+                lat: Number(destinations.latitude),
+                lng: Number(destinations.longitude)
               }}
               title={destinations.name}
             />

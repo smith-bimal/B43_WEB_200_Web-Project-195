@@ -15,11 +15,15 @@ exports.addItem = async (req, res) => {
         const newItem = new Packing(req.body);
         const savedItem = await newItem.save();
 
-        // Add packing item reference to itinerary
-        await Itinerary.findByIdAndUpdate(
-            req.body.itinerary,
-            { $push: { packings: savedItem._id } }
-        );
+        // Fetch and update itinerary
+        const itinerary = await Itinerary.findById(req.body.itinerary);
+        if (!itinerary) {
+            await Packing.findByIdAndDelete(savedItem._id);
+            return res.status(404).json({ message: 'Itinerary not found' });
+        }
+
+        itinerary.packings = [...itinerary.packings, savedItem._id];
+        await itinerary.save();
 
         res.status(201).json(savedItem);
     } catch (err) {
@@ -38,6 +42,18 @@ exports.updateItem = async (req, res) => {
 
 exports.deleteItem = async (req, res) => {
     try {
+        const item = await Packing.findById(req.params.id);
+        if (!item) return res.status(404).json({ message: 'Item not found' });
+
+        // Fetch and update itinerary
+        const itinerary = await Itinerary.findById(item.itinerary);
+        if (itinerary) {
+            itinerary.packings = itinerary.packings.filter(
+                id => id.toString() !== item._id.toString()
+            );
+            await itinerary.save();
+        }
+
         await Packing.findByIdAndDelete(req.params.id);
         res.json({ message: "Item deleted" });
     } catch (err) {

@@ -43,3 +43,15 @@ export const updatePacking = (id, data) => {
 export const deletePacking = (id) => {
     return instance.delete(`/packing/${id}`);
 }
+
+export const addDestination = (data) => {
+    return instance.post('/destinations', data);
+}
+
+export const addItinerary = (data) => {
+    return instance.post('/itineraries', data);
+}
+
+export const deleteItinerary = (id) => {
+    return instance.delete(`/itineraries/${id}`);
+}

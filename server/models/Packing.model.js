@@ -8,8 +8,7 @@ const packingSchema = new mongoose.Schema({
     },
     itinerary: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Itinerary',
-        required: true
+        ref: 'Itinerary'
     }
 });
 
