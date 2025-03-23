@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import instance from '../config/axios';
 
 export const useItineraryData = () => {
@@ -6,21 +6,22 @@ export const useItineraryData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await instance.get(`/itineraries`);
+      setData(response.data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await instance.get(`/itineraries`);
-        setData(response.data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, [])
+  }, [fetchData]);
 
-  return { data, loading, error };
+  return { data, loading, error, refresh: fetchData };
 };

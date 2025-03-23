@@ -78,10 +78,10 @@ const Dashboard = () => {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
-    
+
     const end = new Date(endDate);
     end.setHours(0, 0, 0, 0);
 
@@ -185,7 +185,7 @@ const Dashboard = () => {
 
       const response = await updateExpense(expenseId, tempExpense);
       console.log('💰 Expense updated.');
-      
+
       // Update local state with the updated expense
       setExpenses(prevExpenses =>
         prevExpenses.map(expense =>
@@ -236,13 +236,13 @@ const Dashboard = () => {
     try {
       await deleteExpense(expense._id);
       console.log('🗑️ Expense deleted');
-      
+
       // First update expenses
       setExpenses(prevExpenses => prevExpenses.filter(e => e._id !== expense._id));
-      
+
       // Then update total spent
       setTotalSpent(prev => prev - expense.amount);
-      
+
     } catch (err) {
       console.error('❌ Failed to delete expense:', err);
     }
@@ -257,15 +257,15 @@ const Dashboard = () => {
         amount: parseFloat(newExpense.amount),
         itinerary: selectedItinerary._id
       });
-      
+
       console.log('✨ New expense added.');
-      
+
       // Update local state with the new expense
       setExpenses(prevExpenses => [...prevExpenses, response.data]);
-      
+
       // Update total spent
       setTotalSpent(prev => prev + parseFloat(newExpense.amount));
-      
+
       setNewExpense({ title: '', amount: '' });
       setIsAddingExpense(false);
     } catch (err) {
@@ -442,6 +442,9 @@ const Dashboard = () => {
                   </ul>
                 )}
               </span>
+            </div>
+            <div className="text-2xl font-bold mb-2 relative z-10">
+              Hey {selectedItinerary?.user?.name || 'there'} 👋
             </div>
             <div className="text-lg relative z-10">
               {selectedItinerary?.description ? `Welcome To Your "${selectedItinerary?.description}" Adventure!` : 'Select a trip to get started'}

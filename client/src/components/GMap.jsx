@@ -87,7 +87,7 @@ const GMap = ({ destinations }) => {
         <GoogleMap
           mapContainerStyle={containerStyle}
           center={center}
-          zoom={12}
+          zoom={10}
           options={{
             mapTypeControl: false,
             streetViewControl: false,

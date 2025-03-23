@@ -2,7 +2,10 @@ const mongoose = require('mongoose');
 
 const DestinationSchema = new mongoose.Schema({
     name: String,
-    location: String,
+    location: {
+        state: String,
+        country: String
+    },
     coordinates: {
         latitude: Number,
         longitude: Number
@@ -13,8 +16,5 @@ const DestinationSchema = new mongoose.Schema({
         required: true
     },
 }, { timestamps: true });
-
-// Add compound index
-DestinationSchema.index({ itinerary: 1, name: 1 });
 
 module.exports = mongoose.model('Destination', DestinationSchema);
