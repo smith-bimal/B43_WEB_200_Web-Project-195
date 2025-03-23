@@ -2,18 +2,22 @@ const Destination = require('../models/Destination.model');
 const Itinerary = require('../models/Itinerary.model');
 
 exports.createDestination = async (req, res) => {
-  const { name, location, itinerary, coordinates } = req.body;
+  const { name, location, coordinates, itinerary } = req.body;
   try {
-    const destination = new Destination({ name, location, itinerary, coordinates });
-    await destination.save();
+    const destination = new Destination({ name, location, coordinates, itinerary });
+    const savedDestination = await destination.save();
 
-    // Add destination to itinerary's destinations array
-    await Itinerary.findByIdAndUpdate(
-      itinerary,
-      { $push: { destinations: destination._id } }
-    );
+    // Fetch and update itinerary
+    const itineraryDoc = await Itinerary.findById(itinerary);
+    if (!itineraryDoc) {
+      await Destination.findByIdAndDelete(savedDestination._id);
+      return res.status(404).json({ message: 'Itinerary not found' });
+    }
 
-    res.status(201).json(destination);
+    itineraryDoc.destination = savedDestination._id;
+    await itineraryDoc.save();
+
+    res.status(201).json(savedDestination);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -76,8 +80,19 @@ exports.updateDestination = async (req, res) => {
 
 exports.deleteDestination = async (req, res) => {
   try {
-    const destination = await Destination.findByIdAndDelete(req.params.id);
-    if (!destination) return res.status(404).json({ message: 'Destination not found' });
+    const destination = await Destination.findById(req.params.id);
+    if (!destination) {
+      return res.status(404).json({ message: 'Destination not found' });
+    }
+
+    // Fetch and update itinerary
+    const itinerary = await Itinerary.findById(destination.itinerary);
+    if (itinerary) {
+      itinerary.destination = null; // Remove the destination reference
+      await itinerary.save();
+    }
+
+    await Destination.findByIdAndDelete(req.params.id);
     res.json({ message: 'Destination deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

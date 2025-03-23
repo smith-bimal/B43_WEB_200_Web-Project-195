@@ -12,7 +12,6 @@ function Trips() {
     const [sortField, setSortField] = useState('country');
     const [sortOrder, setSortOrder] = useState('asc');
     const [currentPage, setCurrentPage] = useState(1);
-    const [newTrip, setNewTrip] = useState({ country: '', state: '', startDate: '', endDate: '', cost: '', image: '' });
     const [viewTrip, setViewTrip] = useState(null);
 
     const tripsPerPage = 6;
@@ -29,7 +28,6 @@ function Trips() {
 
     const handleAddTrip = () => {
         setIsModalOpen(true);
-        setNewTrip({ country: '', state: '', startDate: '', endDate: '', cost: '', image: '' });
     };
 
     const handleDeleteTrip = async (trip) => {
@@ -57,16 +55,27 @@ function Trips() {
     };
 
     // First, filter active and pending trips
-    const activeAndPendingTrips = (allTrips || []).filter(trip => 
+    const activeAndPendingTrips = (allTrips || []).filter(trip =>
         trip.status === 'active' || trip.status === 'pending'
     );
 
     // Then, apply search filter if there's a search query
-    const searchFilteredTrips = searchQuery 
-        ? activeAndPendingTrips.filter(trip => 
-            trip.destination?.location?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            trip.destination?.location?.country?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+    const searchFilteredTrips = searchQuery
+        ? activeAndPendingTrips.filter(trip => {
+            const searchLower = searchQuery.toLowerCase();
+            const startDate = formatDate(trip.startDate).toLowerCase();
+            const endDate = formatDate(trip.endDate).toLowerCase();
+
+            return (
+                trip.title?.toLowerCase().includes(searchLower) ||
+                trip.destination?.name?.toLowerCase().includes(searchLower) ||
+                trip.destination?.location?.city?.toLowerCase().includes(searchLower) ||
+                trip.destination?.location?.state?.toLowerCase().includes(searchLower) ||
+                trip.destination?.location?.country?.toLowerCase().includes(searchLower) ||
+                startDate.includes(searchLower) ||
+                endDate.includes(searchLower)
+            );
+        })
         : activeAndPendingTrips;
 
     // Finally, sort the filtered trips
@@ -74,7 +83,7 @@ function Trips() {
         if (sortField === 'country') {
             const aCountry = a.destination?.location?.country || '';
             const bCountry = b.destination?.location?.country || '';
-            return sortOrder === 'asc' 
+            return sortOrder === 'asc'
                 ? aCountry.localeCompare(bCountry)
                 : bCountry.localeCompare(aCountry);
         }
@@ -82,8 +91,8 @@ function Trips() {
         if (sortField === 'startDate') {
             const aDate = new Date(a.startDate);
             const bDate = new Date(b.startDate);
-            return sortOrder === 'asc' 
-                ? aDate - bDate 
+            return sortOrder === 'asc'
+                ? aDate - bDate
                 : bDate - aDate;
         }
 
@@ -100,7 +109,7 @@ function Trips() {
     return (
         <main className="min-h-screen p-8">
             <DashboardNavbar />
-            <div className="p-8 mt-4 max-w-[1600px] mx-auto">
+            <div className="p-8 mt-4 mx-auto">
                 {/* Hero Section */}
                 <div className="bg-gray-800 p-8 rounded-3xl shadow-sm text-white mb-8 overflow-hidden relative h-[200px] flex items-center">
                     <img
@@ -110,7 +119,7 @@ function Trips() {
                     />
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+                            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
                                 <i className="fa-solid fa-plane-departure text-2xl"></i>
                             </div>
                             <h2 className="text-3xl font-semibold">Your Travel Plans</h2>
@@ -132,27 +141,27 @@ function Trips() {
                                     value={searchQuery}
                                     onChange={handleSearch}
                                     placeholder="Search your trips..."
-                                    className="border border-gray-200 p-3 pl-12 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-gray-800/20 focus:border-gray-800"
+                                    className="border border-gray-200 p-3 pl-12 rounded-full w-full focus:outline-none focus:ring-2 focus:ring-gray-800/20 focus:border-gray-800"
                                 />
                             </div>
                         </div>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handleSort("country")}
-                                className="flex-1 bg-gray-100 px-4 py-2 rounded-xl hover:bg-gray-200 transition text-gray-700 font-medium"
+                                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium"
                             >
                                 Country {sortField === "country" && <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>}
                             </button>
                             <button
                                 onClick={() => handleSort("startDate")}
-                                className="flex-1 bg-gray-100 px-4 py-2 rounded-xl hover:bg-gray-200 transition text-gray-700 font-medium"
+                                className="flex-1 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition text-gray-700 font-medium"
                             >
                                 Date {sortField === "startDate" && <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>}
                             </button>
                         </div>
                         <button
                             onClick={handleAddTrip}
-                            className="bg-gray-800 text-white px-6 py-2 rounded-xl hover:bg-gray-700 transition flex items-center justify-center gap-2 font-medium"
+                            className="bg-gray-800 text-white px-6 py-2 rounded-full hover:bg-gray-700 transition flex items-center justify-center gap-2 font-medium"
                         >
                             <i className="fa-solid fa-plus text-sm"></i>
                             New Trip
@@ -175,7 +184,7 @@ function Trips() {
                 )}
 
                 {/* Trip Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                     {currentTrips.map((trip) => {
                         return (
                             <div key={trip._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
@@ -204,14 +213,14 @@ function Trips() {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleViewTrip(trip)}
-                                            className="flex-1 bg-gray-800 text-white px-4 py-2.5 rounded-xl hover:bg-gray-700 transition flex items-center justify-center gap-2 font-medium"
+                                            className="flex-1 bg-gray-800 text-white px-4 py-2.5 rounded-full hover:bg-gray-700 transition flex items-center justify-center gap-2 font-medium"
                                         >
                                             <Eye className="w-4 h-4" />
                                             View Details
                                         </button>
                                         <button
                                             onClick={() => handleDeleteTrip(trip)}
-                                            className="bg-red-50 p-2.5 rounded-xl hover:bg-red-100 transition group"
+                                            className="bg-red-50 p-2.5 rounded-full hover:bg-red-100 transition group"
                                         >
                                             <Trash className="w-4 h-4 text-red-600 group-hover:text-red-700" />
                                         </button>
@@ -230,7 +239,7 @@ function Trips() {
                         <p className="text-gray-500 mb-6">Start planning your next adventure</p>
                         <button
                             onClick={handleAddTrip}
-                            className="bg-gray-800 text-white px-6 py-2 rounded-xl hover:bg-gray-700 transition inline-flex items-center gap-2"
+                            className="bg-gray-800 text-white px-6 py-2 rounded-full hover:bg-gray-700 transition inline-flex items-center gap-2"
                         >
                             <i className="fa-solid fa-plus"></i>
                             Add New Trip
@@ -244,17 +253,17 @@ function Trips() {
                         <button
                             onClick={() => paginate(currentPage - 1)}
                             disabled={currentPage === 1}
-                            className="bg-gray-800 text-white px-5 py-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition font-medium"
+                            className="bg-gray-800 text-white px-5 py-2.5 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition font-medium"
                         >
-                            Previous
+                            Prev
                         </button>
-                        <span className="bg-gray-100 px-5 py-2.5 rounded-xl font-medium text-gray-800">
-                            Page {currentPage}
+                        <span className="bg-gray-100 px-5 py-2.5 rounded-full font-medium text-gray-800">
+                            {currentPage}
                         </span>
                         <button
                             onClick={() => paginate(currentPage + 1)}
                             disabled={indexOfLastTrip >= sortedTrips.length}
-                            className="bg-gray-800 text-white px-5 py-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition font-medium"
+                            className="bg-gray-800 text-white px-5 py-2.5 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition font-medium"
                         >
                             Next
                         </button>
@@ -285,7 +294,7 @@ function Trips() {
                                 </p>
                                 <p className="flex justify-between">
                                     <span className="text-gray-600">Total Cost:</span>
-                                    <span className="font-medium">${viewTrip.cost}</span>
+                                    <span className="font-medium">${viewTrip.budget}</span>
                                 </p>
                             </div>
                             <div className="flex justify-end">

@@ -8,8 +8,7 @@ const activitySchema = new mongoose.Schema({
   destination: String,
   itinerary: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Itinerary',
-    required: true
+    ref: 'Itinerary'
   }
 }, { timestamps: true });
 

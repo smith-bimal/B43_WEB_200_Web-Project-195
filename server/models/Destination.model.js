@@ -1,10 +1,16 @@
 const mongoose = require('mongoose');
 
 const DestinationSchema = new mongoose.Schema({
-    name: String,
+    name: {
+        type: String,
+        required: true
+    },
     location: {
         state: String,
-        country: String
+        country: {
+            type: String,
+            required: true
+        }
     },
     coordinates: {
         latitude: Number,
@@ -14,7 +20,7 @@ const DestinationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Itinerary',
         required: true
-    },
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Destination', DestinationSchema);

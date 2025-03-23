@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from 'react-router';
 import DashboardNavbar from "../components/DashboardNavbar";
 import BudgetChart from "../components/BudgetChart";
 import Spinner from "../components/Spinner";
@@ -13,7 +14,26 @@ import instance from '../config/axios';
 import { addExpense, addPackings, addTasks, deleteExpense, deletePacking, updateBudget, updateExpense, updatePacking, updateTask } from "../hooks/useApiCalls";
 
 const Dashboard = () => {
-  const { data, loading, error } = useItineraryData();
+  const { data: allData, loading, error } = useItineraryData();
+  const [data, setData] = useState([]);
+
+  // Filter out completed itineraries
+  useEffect(() => {
+    if (allData) {
+      const filteredData = allData.filter(itinerary => {
+        if (!itinerary.endDate) return true;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const endDate = new Date(itinerary.endDate);
+        endDate.setHours(0, 0, 0, 0);
+        
+        return endDate >= today;
+      });
+      
+      setData(filteredData);
+    }
+  }, [allData]);
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedItinerary, setSelectedItinerary] = useState(null);
@@ -406,7 +426,78 @@ const Dashboard = () => {
 
   if (loading) return <div className="flex h-screen justify-center items-center"><Spinner /></div>;
   if (error) return <div className="flex h-screen justify-center text-red-500 items-center">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="flex h-screen justify-center items-center">No itineraries found</div>;
+  
+  // Replace the empty state check with this clean implementation
+  if (!data || data.length === 0) {
+    return (
+      <main className="p-8">
+        <DashboardNavbar />
+        <div className="p-4 mt-8 mx-auto">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-8 md:grid-cols-2">
+            {/* Welcome Card */}
+            <div className="col-span-1 bg-gray-800 p-6 rounded-3xl shadow-sm text-white lg:col-span-8 overflow-hidden relative min-h-[300px] flex flex-col justify-center items-center">
+              <img
+                src="https://cdn.pixabay.com/photo/2019/08/12/17/11/asphalt-road-4401704_960_720.jpg"
+                alt="Background"
+                className="w-full h-full absolute blur-[5px] brightness-50 object-cover z-0"
+              />
+              <div className="relative z-10 text-center">
+                <h1 className="text-4xl font-bold mb-4">
+                  {allData && allData.length > 0 
+                    ? "No Active or Upcoming Trips" 
+                    : "Welcome to Your Travel Dashboard"}
+                </h1>
+                <p className="text-xl mb-8">
+                  {allData && allData.length > 0 
+                    ? "All your trips are completed. Time to plan a new adventure!" 
+                    : "Start planning your next adventure!"}
+                </p>
+                <Link 
+                  to="/trips" 
+                  className="bg-green-100 hover:bg-green-200 text-gray-800 px-6 py-3 rounded-full font-semibold inline-flex items-center gap-2 transition-colors"
+                >
+                  <i className="fa-solid fa-plus"></i>
+                  {allData && allData.length > 0 ? "Plan New Trip" : "Create Your First Trip"}
+                </Link>
+              </div>
+            </div>
+
+            {/* Feature Preview Cards */}
+            {[
+              {
+                icon: "fa-chart-pie",
+                title: "Track Your Budget",
+                description: "Plan and manage your trip expenses efficiently."
+              },
+              {
+                icon: "fa-list-check",
+                title: "Organize Activities",
+                description: "Schedule your daily activities and keep track of your itinerary."
+              },
+              {
+                icon: "fa-map-location-dot",
+                title: "Map Your Destinations",
+                description: "Visualize your travel route and explore locations."
+              },
+              {
+                icon: "fa-suitcase",
+                title: "Packing Checklist",
+                description: "Never forget essential items with smart packing lists."
+              }
+            ].map((feature, index) => (
+              <div key={index} className="col-span-1 lg:col-span-4 bg-gray-100 p-6 rounded-3xl shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">
+                  <i className={`fa-solid ${feature.icon} mr-2`}></i>
+                  {feature.title}
+                </h2>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="p-8">
@@ -535,7 +626,7 @@ const Dashboard = () => {
                           className="flex border-b border-b-[#0001] justify-between group items-center py-2"
                         >
                           {editingExpense === ex._id ? (
-                            <div className="flex flex-1 gap-0.5 items-center" onBlur={() => handleUpdateExpense(ex._id)}>
+                            <div className="flex flex-1 gap-0.5 items-center">
                               <input
                                 type="text"
                                 value={tempExpense.title || ex.title}
@@ -548,6 +639,11 @@ const Dashboard = () => {
                                 value={tempExpense.amount || ex.amount}
                                 onChange={(e) => setTempExpense(prev => ({ ...prev, amount: e.target.value }))}
                                 className="bg-transparent border-none text-right w-20 font-medium outline-none"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleUpdateExpense(ex._id);
+                                  }
+                                }}
                               />
                             </div>
                           ) : (
@@ -644,7 +740,7 @@ const Dashboard = () => {
 
           <div className="col-span-1 lg:col-span-3 min-h-[400px]">
             <DashboardCard
-              heading={"DAYS & ACTIVITY"}
+              heading={"ACTIVITY"}
               icon={"fa-person-walking fa-solid"}
               bg={"bg-amber-100"}
             >
@@ -691,7 +787,7 @@ const Dashboard = () => {
                                 }
                                 setNewTask(prev => ({ ...prev, descriptions: newDesc }));
                               }}
-                              className="bg-amber-500 rounded text-white px-3 py-1"
+                              className="bg-amber-300 rounded text-white px-3 py-1"
                             >
                               {idx === newTask.descriptions.length - 1 ? '+' : '×'}
                             </button>
@@ -706,7 +802,7 @@ const Dashboard = () => {
                           </button>
                           <button
                             onClick={handleAddTask}
-                            className="bg-amber-500 rounded text-white px-4 py-2"
+                            className="bg-amber-300 rounded text-white px-4 py-2"
                           >
                             Save
                           </button>
@@ -714,44 +810,49 @@ const Dashboard = () => {
                       </div>
                     )}
                     {startDate ? (
-                      Array.from(new Set(activities.map(task => task.date)))
-                        .sort((a, b) => new Date(a) - new Date(b)) // Sort by actual date
-                        .map(date => {
-                          const dayNumber = getDayNumber(date);
-                          return (
-                            <div key={date} className="mb-6">
-                              <div className="flex gap-4 items-center mb-4">
-                                <span className="bg-[#0005] rounded-full font-semibold px-3 py-2">
-                                  Day {dayNumber}
-                                </span>
-                                <span className="text-gray-500 text-sm">
-                                  {new Date(date).toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    month: 'long',
-                                    day: 'numeric'
-                                  })}
-                                </span>
+                      activities.length === 0 ? (
+                        <div className="text-gray-500 py-4 text-center">
+                          No activities planned yet
+                        </div>
+                      ) : (
+                        Array.from(new Set(activities.map(task => task.date)))
+                          .sort((a, b) => new Date(a) - new Date(b))
+                          .map(date => {
+                            const dayNumber = getDayNumber(date);
+                            return (
+                              <div key={date} className="mb-6">
+                                <div className="flex gap-4 items-center mb-4">
+                                  <span className="bg-[#0005] rounded-full font-semibold px-3 py-2">
+                                    Day {dayNumber}
+                                  </span>
+                                  <span className="text-gray-500 text-sm">
+                                    {new Date(date).toLocaleDateString('en-US', {
+                                      weekday: 'long',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                                {activities
+                                  .filter(task => task.date === date)
+                                  .map(task => (
+                                    <ActivityTask
+                                      key={task._id}
+                                      task={{
+                                        ...task,
+                                        title: task.name,
+                                        descriptions: task.descriptions || []
+                                      }}
+                                      onEdit={handleEditTask}
+                                      onDelete={handleDeleteTask}
+                                    />
+                                  ))}
                               </div>
-                              {activities
-                                .filter(task => task.date === date)
-                                .map(task => (
-                                  <ActivityTask
-                                    key={task._id}
-                                    task={{
-                                      ...task,
-                                      title: task.name,
-                                      descriptions: task.descriptions || []
-                                    }}
-                                    isExpanded={isExpanded}
-                                    onEdit={handleEditTask}
-                                    onDelete={handleDeleteTask}
-                                  />
-                                ))}
-                            </div>
-                          );
-                        })
+                            );
+                          })
+                      )
                     ) : (
-                      <div className="text-center text-gray-500 py-4">
+                      <div className="text-gray-500 py-4">
                         Please set trip dates first
                       </div>
                     )}
@@ -763,7 +864,7 @@ const Dashboard = () => {
                     <div className='flex bg-gray-800 h-6 justify-center rounded-full text-base text-yellow-100 w-6 items-center mr-2'>
                       <i className="fa-plus fa-solid"></i>
                     </div>
-                    New Activity
+                    Add Activity
                   </button>
                 </div>
               )}
@@ -773,12 +874,12 @@ const Dashboard = () => {
           <div className="col-span-2 text-white">
             <DashboardCard
               heading={"PACKING LIST"}
-              icon={"fa-clipboard-list fa-solid"}
+              icon={"fa-list fa-solid"}
               bg={"bg-gray-800"}
             >
               {(isExpanded) => (
                 <div className="flex flex-col h-full justify-between">
-                  <ul className="max-h-[22rem] mb-16 overflow-auto space-y-2">
+                  <ul className="max-h-[360px] mb-16 overflow-auto space-y-2">
                     {isAddingPackingItem && (
                       <li className="flex border-b border-b-[#fff2] justify-between items-center py-2">
                         <div className="flex flex-1 gap-4 items-center">
@@ -852,7 +953,7 @@ const Dashboard = () => {
                     )}
                   </ul>
                   <button
-                    className="flex text-white text-xl absolute bottom-4 cursor-pointer items-center py-2"
+                    className="flex text-white text-xl absolute bottom-4 cursor-pointer items-center mt-4 py-2"
                     onClick={() => setIsAddingPackingItem(true)}
                   >
                     <div className='flex bg-amber-100 h-6 justify-center rounded-full text-base text-gray-900 w-6 items-center mr-2'>
@@ -870,4 +971,4 @@ const Dashboard = () => {
   );
 };
 
-export default React.memo(Dashboard); // Memoize the entire component
+export default React.memo(Dashboard);
