@@ -93,7 +93,7 @@ const Archive = () => {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="min-h-screen p-2 sm:p-4 md:p-8">
       <DashboardNavbar />
       <div className="sm:p-4 md:p-8 mt-4 mx-auto">
         <div className="bg-gray-800 p-4 md:p-8 rounded-3xl shadow-sm text-white mb-8 overflow-hidden relative h-[200px] flex items-center">

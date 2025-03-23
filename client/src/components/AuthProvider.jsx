@@ -3,7 +3,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import axios from '../config/axios';
-import Spinner from './Spinner';
 
 const AuthContext = createContext(null);
 
@@ -40,7 +39,6 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const response = await axios.post('/auth/login', { email, password });
-            console.log(response);
             const { token, user } = response.data;
             localStorage.setItem('token', token);
             navigate('/dashboard', { replace: true });

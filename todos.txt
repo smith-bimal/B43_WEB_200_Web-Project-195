@@ -1,7 +1,7 @@
 1. ---------Update the itinerary status as per the date automatically---------
 2. ---------Show all the itineraries in the trips page---------
 3. ---------Update the archive page---------
-4. Make all the pages responsive
+4. ---------Make all the pages responsive---------
 5. ---------redirect to the main page with the trip selected when clicked view more---------
 6. ---------post deleting itinerary remove the packings, destinations, expenses, activities---------
 7. ---------add option to get the pdf of the activity lists and packing lists---------
