@@ -9,8 +9,12 @@ const DestinationSchema = new mongoose.Schema({
     },
     itinerary: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Itinerary'
+        ref: 'Itinerary',
+        required: true
     },
-});
+}, { timestamps: true });
+
+// Add compound index
+DestinationSchema.index({ itinerary: 1, name: 1 });
 
 module.exports = mongoose.model('Destination', DestinationSchema);

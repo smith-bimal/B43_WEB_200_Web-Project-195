@@ -2,11 +2,21 @@ const Activity = require('../models/Activity.model');
 const Itinerary = require('../models/Itinerary.model');
 
 exports.createActivity = async (req, res) => {
-  const { name, type, date, destination, itinerary } = req.body;
+  const { name, type, date, destination, itinerary, descriptions } = req.body;
   try {
-    const activity = new Activity({ name, type, date, destination, itinerary });
+    // Ensure descriptions is always an array
+    const desc = Array.isArray(descriptions) ? descriptions : [];
+
+    const activity = new Activity({
+      name,
+      type,
+      date,
+      destination,
+      itinerary,
+      descriptions: desc
+    });
     await activity.save();
-    
+
     // Add activity to itinerary's activities array
     await Itinerary.findByIdAndUpdate(
       itinerary,
@@ -21,7 +31,7 @@ exports.createActivity = async (req, res) => {
 
 exports.getActivities = async (req, res) => {
   try {
-    const activities = await Activity.find({ itinerary: req.query.itinerary });
+    const activities = await Activity.find({ itinerary: req.query.itinerary }).sort({ date: 1 });
     res.json(activities);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -40,7 +50,21 @@ exports.getActivity = async (req, res) => {
 
 exports.updateActivity = async (req, res) => {
   try {
-    const activity = await Activity.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { name, date, descriptions } = req.body;
+
+    // Ensure descriptions is always an array
+    const desc = Array.isArray(descriptions) ? descriptions : [];
+
+    const activity = await Activity.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        date,
+        descriptions: desc
+      },
+      { new: true }
+    );
+
     if (!activity) return res.status(404).json({ message: 'Activity not found' });
     res.json(activity);
   } catch (error) {

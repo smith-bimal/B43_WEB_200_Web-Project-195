@@ -1,18 +1,11 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 
 function CreateItineraryModal({ onClose, onCreate }) {
   const [title, setTitle] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    const response = await axios.post(
-      '/api/itineraries',
-      { title },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    onCreate(response.data);
+    onCreate({ title });
     onClose();
   };
 

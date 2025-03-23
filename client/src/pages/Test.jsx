@@ -6,12 +6,15 @@ import GMap from "../components/GMap";
 import DashboardCard from "../components/DashboardCard";
 import Calendar from '../components/Calendar';
 import 'react-day-picker/dist/style.css';
-import { taskList } from '../data/taskList';
 import ActivityTask from "../components/ActivityTask";
+import { useItineraryData } from "../hooks/useItineraryData";
+
 
 const Test = () => {
+    const taskList = [];
     const [showDropdown, setShowDropdown] = useState(false);
     const toggleDropdown = () => setShowDropdown(!showDropdown);
+    const { data } = useItineraryData();
 
     const itineraries = ["Kathmandu", "Pokhara", "Chitwan", "Everest"];
     const [expenses, setExpenses] = useState([

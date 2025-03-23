@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
 import BudgetChart from "../components/BudgetChart";
@@ -6,64 +7,74 @@ import GMap from "../components/GMap";
 import DashboardCard from "../components/DashboardCard";
 import Calendar from '../components/Calendar';
 import 'react-day-picker/dist/style.css';
-import { taskList } from '../data/taskList';
 import ActivityTask from "../components/ActivityTask";
 import { useItineraryData } from '../hooks/useItineraryData';
 import instance from '../config/axios';
-import { useItineraries } from '../hooks/useItineraries';
+import { addExpense, addPackings, addTasks, deleteExpense, deletePacking, refetchTasks, updateBudget, updateExpense, updatePacking, updateTask } from "../hooks/useApiCalls";
 
 const Dashboard = () => {
+  const { data, loading, error } = useItineraryData();
+
   const [showDropdown, setShowDropdown] = useState(false);
-  const toggleDropdown = () => setShowDropdown(!showDropdown);
+  const [selectedItinerary, setSelectedItinerary] = useState(null);
 
-  const { itineraries, loading: itinerariesLoading } = useItineraries();
-  const [currentItineraryId, setCurrentItineraryId] = useState(null);
-  const {
-    itinerary,
-    activities,
-    expenses = [], // Provide default empty arrays
-    packingItems = [],
-    destinations,
-    loading,
-    error,
-    updateExpense,
-    addExpense,
-    deleteExpense,
-    updatePackingItem,
-    addPackingItem,
-    deletePackingItem,
-    updateBudget,
-    totalBudget,
-    amountSpent,
-    refetchActivities
-  } = useItineraryData(currentItineraryId);
+  const [editingBudget, setEditingBudget] = useState(false);
+  const [tempBudget, setTempBudget] = useState(0);
 
-  const [checkedItems, setCheckedItems] = useState({});
-
+  const [expenses, setExpenses] = useState([]);
+  const [tempExpense, setTempExpense] = useState({ title: '', amount: '' });
   const [editingExpense, setEditingExpense] = useState(null);
-  const [editingPackingItem, setEditingPackingItem] = useState(null);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
-  const [isAddingPackingItem, setIsAddingPackingItem] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: '', amount: '' });
-  const [newPackingItem, setNewPackingItem] = useState('');
+  const [totalSpent, setTotalSpent] = useState(0);
 
-  const [startDate, setStartDate] = useState("2025-03-18");
+  const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [tripStatus, setTripStatus] = useState({ text: '', days: 0 });
   const [range, setRange] = useState({ from: undefined, to: undefined });
 
-  const [editingBudget, setEditingBudget] = useState(false);
-  const [tempBudget, setTempBudget] = useState(totalBudget);
+  const [destination, setDestination] = useState({ latitude: 0, longitude: 0 });
 
-  const [tasks, setTasks] = useState(taskList);
+  const [newTask, setNewTask] = useState({ name: '', date: '', descriptions: [''] });
+  const [activities, setActivities] = useState([]);
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [newTask, setNewTask] = useState({
-    title: '',
-    date: '',
-    descriptions: ['']
-  });
 
-  const calculateTripStatus = () => {
+  const [packingItems, setPackingItems] = useState([]);
+  const [isAddingPackingItem, setIsAddingPackingItem] = useState(false);
+  const [editingPackingItem, setEditingPackingItem] = useState(null);
+  const [newPackingItem, setNewPackingItem] = useState({ item: '' });
+
+  // Move initialization logic to useEffect
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const initialItinerary = data[0];
+      setSelectedItinerary(initialItinerary);
+      setTempBudget(initialItinerary.budget);
+      setExpenses(initialItinerary.expenses);
+      setTotalSpent(initialItinerary.expenses.reduce((acc, curr) => acc + curr.amount, 0));
+      setDestination({
+        latitude: initialItinerary.destination?.coordinates?.latitude || 0,
+        longitude: initialItinerary.destination?.coordinates?.longitude || 0
+      });
+      setActivities(initialItinerary.activities || []);
+      setPackingItems(initialItinerary.packings || []);
+
+      // Set date range
+      if (initialItinerary.startDate && initialItinerary.endDate) {
+        const startDateObj = new Date(initialItinerary.startDate);
+        const endDateObj = new Date(initialItinerary.endDate);
+        setRange({
+          from: startDateObj,
+          to: endDateObj
+        });
+        setStartDate(startDateObj);
+        setEndDate(endDateObj);
+      }
+    }
+  }, [data]);
+
+  // Fix trip status calculation
+  const calculateTripStatus = useCallback(() => {
     if (!startDate || !endDate) return;
 
     const today = new Date();
@@ -75,12 +86,12 @@ const Dashboard = () => {
 
     if (daysTillStart > 0) {
       setTripStatus({
-        text: 'Days left',
+        text: 'Days to start',
         days: daysTillStart
       });
     } else if (daysTillEnd >= 0) {
       setTripStatus({
-        text: 'Trip ongoing',
+        text: 'Days to end',
         days: daysTillEnd + 1
       });
     } else {
@@ -89,53 +100,93 @@ const Dashboard = () => {
         days: 0
       });
     }
-  };
+  }, [startDate, endDate]);
 
+  useEffect(() => {
+    calculateTripStatus();
+  }, [calculateTripStatus]);
+
+  // Fix budget save handler
   const handleBudgetSave = async () => {
+    if (!selectedItinerary?._id) return;
+
     try {
-      await updateBudget(tempBudget);
+      await updateBudget(selectedItinerary._id, tempBudget);
+      console.log('Budget updated successfully!');
       setEditingBudget(false);
     } catch (err) {
       console.error('Failed to update budget:', err);
     }
   };
 
-  useEffect(() => {
-    calculateTripStatus();
-  }, [startDate, endDate]);
+  // Fix itinerary selection
+  const handleItinerarySelect = useCallback((id) => {
+    const selected = data?.find(it => it._id === id);
+    if (selected) {
+      setSelectedItinerary(selected);
+      setTempBudget(selected.budget);
+      setExpenses(selected.expenses);
+      setTotalSpent(selected.expenses.reduce((acc, curr) => acc + curr.amount, 0));
 
-  useEffect(() => {
-    if (range.from && range.to) {
-      setStartDate(range.from);
-      setEndDate(range.to);
-    }
-  }, [range]);
+      // Update dates
+      if (selected.startDate && selected.endDate) {
+        const startDateObj = new Date(selected.startDate);
+        const endDateObj = new Date(selected.endDate);
+        setRange({ from: startDateObj, to: endDateObj });
+        setStartDate(startDateObj);
+        setEndDate(endDateObj);
+      } else {
+        setRange({ from: undefined, to: undefined });
+        setStartDate(null);
+        setEndDate(null);
+      }
 
-  useEffect(() => {
-    if (itinerary) {
-      setTempBudget(itinerary.budget);
-      setRange({
-        from: new Date(itinerary.startDate),
-        to: new Date(itinerary.endDate)
+      // Update destination
+      setDestination({
+        latitude: selected.destination?.coordinates?.latitude || 0,
+        longitude: selected.destination?.coordinates?.longitude || 0
       });
-    }
-  }, [itinerary]);
 
-  useEffect(() => {
-    // Set initial itinerary when itineraries are loaded
-    if (itineraries.length > 0 && !currentItineraryId) {
-      setCurrentItineraryId(itineraries[0]._id);
-    }
-  }, [itineraries]);
+      // Update activities and packing list
+      setActivities(selected.activities || []);
+      setPackingItems(selected.packings || []);
 
-  const updateExpenseField = async (expenseId, field, value) => {
+      setShowDropdown(false);
+    }
+  }, [data]);
+
+  const toggleDropdown = () => setShowDropdown(!showDropdown);
+
+  const updateActivityTasks = async () => {
+    await refetchTasks(selectedItinerary._id);
+    console.log('Tasks updated successfully');
+  }
+
+  const handleUpdateExpense = async (expenseId) => {
     try {
-      const expenseData = expenses.find(e => e._id === expenseId);
-      if (!expenseData) return;
-      await updateExpense(expenseId, {
-        ...expenseData,
-        [field]: field === "amount" ? parseFloat(value) || 0 : value
+      if (!tempExpense.title || !tempExpense.amount) return;
+
+      await updateExpense(expenseId, tempExpense);
+      console.log('Expense updated successfully!');
+
+      // Update local state
+      setExpenses(prevExpenses =>
+        prevExpenses.map(expense =>
+          expense._id === expenseId
+            ? { ...expense, title: tempExpense.title, amount: parseFloat(tempExpense.amount) }
+            : expense
+        )
+      );
+
+      // Update total spent
+      setTotalSpent(prevTotal => {
+        const oldExpense = expenses.find(e => e._id === expenseId);
+        return prevTotal - oldExpense.amount + parseFloat(tempExpense.amount);
       });
+
+      // Reset states
+      setTempExpense({ title: '', amount: '' });
+      setEditingExpense(null);
     } catch (err) {
       console.error('Failed to update expense:', err);
     }
@@ -145,7 +196,11 @@ const Dashboard = () => {
     try {
       const item = packingItems.find(i => i._id === itemId);
       if (!item) return;
-      await updatePackingItem(itemId, { ...item, name: newName });
+      await updatePacking(itemId, { ...item, name: newName });
+      // Update local state after successful API call
+      setPackingItems(prevItems =>
+        prevItems.map(i => i._id === itemId ? { ...i, item: newName } : i)
+      );
     } catch (err) {
       console.error('Failed to update packing item:', err);
     }
@@ -159,43 +214,57 @@ const Dashboard = () => {
   const handleExpenseEdit = useCallback((expense) => {
     if (!expense?._id) return;
     setEditingExpense(expense._id);
+    setTempExpense({ title: expense.title, amount: expense.amount });
   }, []);
 
-  const handleDeleteExpense = useCallback((expenseId) => {
-    if (!expenseId || !deleteExpense) return;
+  const handleDeleteExpense = useCallback(async (expense) => {
+    if (!expense?._id) return;
     try {
-      deleteExpense(expenseId);
+      await deleteExpense(expense._id);
+      console.log('Expense deleted successfully!');
+      // Update local state after successful deletion
+      setExpenses(prevExpenses => prevExpenses.filter(e => e._id !== expense._id));
+      // Update total spent
+      setTotalSpent(prevTotal => prevTotal - expense.amount);
     } catch (err) {
       console.error('Failed to delete expense:', err);
     }
-  }, [deleteExpense]); // Now deleteExpense will be available
+  }, []);
 
   const handleAddExpense = useCallback(async () => {
-    if (!newExpense.name || !newExpense.amount) return;
+    if (!newExpense.title || !newExpense.amount) return;
 
     try {
       await addExpense({
         title: newExpense.title,
-        amount: parseFloat(newExpense.amount)
+        amount: parseFloat(newExpense.amount),
+        itinerary: selectedItinerary._id
       });
+      console.log('New expense added successfully!');
       setNewExpense({ title: '', amount: '' });
       setIsAddingExpense(false);
     } catch (err) {
       console.error('Failed to add expense:', err);
-      // Add error notification here
     }
   }, [newExpense, addExpense]);
 
   const handleAddPackingItem = async () => {
-    if (newPackingItem.trim()) {
-      await addPackingItem({
-        item: newPackingItem.trim(),
-        hasTaken: false
-      });
-      setNewPackingItem('');
-      setIsAddingPackingItem(false);
+    try {
+      if (newPackingItem.item) {
+        const response = await addPackings({
+          item: newPackingItem.item.trim(),
+          itinerary: selectedItinerary._id
+        });
+        console.log('New packing item added successfully!');
+        // Update local state with the new item from the response
+        setPackingItems(prevItems => [...prevItems, response.data]);
+        setNewPackingItem({ item: '' });
+        setIsAddingPackingItem(false);
+      }
+    } catch (e) {
+      console.error('Failed to add packing item:', e);
     }
-  };
+  }
 
   const handleExpenseBlur = (e) => {
     const currentTarget = e.currentTarget;
@@ -211,24 +280,43 @@ const Dashboard = () => {
 
   const handleCheckboxChange = async (itemId, currentStatus) => {
     try {
-      await updatePackingItem(itemId, { hasTaken: !currentStatus });
+      await updatePacking(itemId, { hasTaken: !currentStatus });
+      console.log('Packing item status updated successfully!');
+      // Update local state after successful API call
+      setPackingItems(prevItems =>
+        prevItems.map(i => i._id === itemId ? { ...i, hasTaken: !currentStatus } : i)
+      );
     } catch (err) {
       console.error('Failed to update packing item:', err);
     }
   };
 
   const handleDeletePackingItem = async (itemId) => {
-    await deletePackingItem(itemId);
+    try {
+      await deletePacking(itemId);
+      console.log('Packing item deleted successfully!');
+      // Update local state after successful API call
+      setPackingItems(prevItems => prevItems.filter(i => i._id !== itemId));
+    } catch (err) {
+      console.error('Failed to delete packing item:', err);
+    }
   };
 
   const handleEditTask = async (updatedTask) => {
     try {
-      await instance.put(`/activities/${updatedTask._id}`, {
-        title: updatedTask.title,
-        date: updatedTask.date,
-        descriptions: updatedTask.descriptions
-      });
-      await refetchActivities();
+      if (!updatedTask._id) {
+        console.error('Task ID is missing');
+        return;
+      }
+
+      await updateTask(updatedTask._id, updatedTask);
+      console.log('Task updated successfully!');
+      // Update local state after successful update
+      setActivities(prevActivities =>
+        prevActivities.map(activity =>
+          activity._id === updatedTask._id ? updatedTask : activity
+        )
+      );
     } catch (err) {
       console.error('Failed to update task:', err);
     }
@@ -237,25 +325,30 @@ const Dashboard = () => {
   const handleDeleteTask = async (taskId) => {
     try {
       await instance.delete(`/activities/${taskId}`);
-      await refetchActivities();  // Use refetchActivities after deletion
+      console.log('Task deleted successfully!');
+      // Update local state after successful deletion
+      setActivities(prevActivities =>
+        prevActivities.filter(activity => activity._id !== taskId)
+      );
     } catch (err) {
       console.error('Failed to delete task:', err);
     }
   };
 
   const handleAddTask = async () => {
-    if (newTask.title && newTask.date) {
+    if (newTask.name && newTask.date) {
       try {
-        await instance.post(`/activities`, {
-          name: newTask.title,
-          type: 'task',
+        const response = await addTasks({
+          name: newTask.name,
           date: newTask.date,
-          descriptions: newTask.descriptions || [],
-          itinerary: currentItineraryId
+          descriptions: newTask.descriptions,
+          itinerary: selectedItinerary._id
         });
-        setNewTask({ title: '', date: '', descriptions: [''] });
+        console.log('New task added successfully!');
+        // Update local state with new task
+        setActivities(prevActivities => [...prevActivities, response.data]);
+        setNewTask({ name: '', date: '', descriptions: [''] });
         setIsAddingTask(false);
-        await refetchActivities();
       } catch (err) {
         console.error('Failed to add task:', err);
       }
@@ -266,8 +359,10 @@ const Dashboard = () => {
     if (!startDate || !date) return null;
     const start = new Date(startDate);
     const current = new Date(date);
-    const diffTime = current - start;
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    // Calculate the difference in days and add 1 to make it 1-based
+    const diffTime = Math.abs(current - start);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays;
   };
 
   useEffect(() => {
@@ -277,54 +372,26 @@ const Dashboard = () => {
     };
   }, []);
 
-  const handleItinerarySelect = (id) => {
-    setCurrentItineraryId(id);
-    setShowDropdown(false);
+  const handleUpdateDates = async (newRange) => {
+    if (!selectedItinerary?._id || !newRange.from || !newRange.to) return;
+
+    try {
+      await instance.put(`/itineraries/${selectedItinerary._id}`, {
+        startDate: newRange.from,
+        endDate: newRange.to
+      });
+      console.log('Trip dates updated successfully!');
+      setStartDate(newRange.from);
+      setEndDate(newRange.to);
+      setRange(newRange);
+    } catch (err) {
+      console.error('Failed to update dates:', err);
+    }
   };
 
-  const updateItinerary = useCallback(async (updates) => {
-    try {
-      const response = await instance.put(`/itineraries/${currentItineraryId}`, updates);
-      console.log(response);
-    } catch (error) {
-      console.error('Failed to update itinerary:', error);
-    }
-  }, [currentItineraryId]);
-
-  useEffect(() => {
-    if (range.from && range.to && currentItineraryId) {
-      updateItinerary({
-        startDate: range.from,
-        endDate: range.to
-      });
-    }
-  }, [range, currentItineraryId, updateItinerary]);
-
-  if (loading) {
-    return <div className="flex h-screen justify-center items-center">
-      <Spinner />
-    </div>;
-  }
-
-  if (error) {
-    return <div className="flex h-screen justify-center text-red-500 items-center">
-      Error: {error}
-    </div>;
-  }
-
-  if (error && currentItineraryId) {
-    return (
-      <div className="flex h-screen justify-center text-red-500 items-center">
-        <p>Error: {error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="bg-red-500 rounded text-white ml-4 px-4 py-2"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex h-screen justify-center items-center"><Spinner /></div>;
+  if (error) return <div className="flex h-screen justify-center text-red-500 items-center">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="flex h-screen justify-center items-center">No itineraries found</div>;
 
   return (
     <main className="p-8">
@@ -344,33 +411,29 @@ const Dashboard = () => {
                   className="bg-gray-700 rounded-full text-white cursor-pointer px-4 py-1"
                   onClick={toggleDropdown}
                 >
-                  {itinerary?.title || 'Select Trip'} <i className="fa-angle-down fa-solid"></i>
+                  {data?.title || 'Select Trip'} <i className="fa-angle-down fa-solid"></i>
                 </span>
                 {showDropdown && (
                   <ul className="bg-white rounded-lg shadow-lg text-black absolute mt-2 overflow-hidden z-20">
-                    {itineraries.map((item) => (
+                    {data.map((it) => (
                       <li
-                        key={item._id}
-                        className={`cursor-pointer hover:bg-gray-200 px-4 py-2 ${item._id === currentItineraryId ? 'bg-gray-100' : ''
-                          }`}
-                        onClick={() => handleItinerarySelect(item._id)}
+                        key={it._id}
+                        className={`cursor-pointer hover:bg-gray-200 px-4 py-2 ${it._id === selectedItinerary._id ? 'bg-gray-100' : ''}`}
+                        onClick={() => handleItinerarySelect(it._id)}
                       >
-                        {item.title}
+                        {it.title}
                       </li>
                     ))}
                   </ul>
                 )}
               </span>
             </div>
-            <div className="text-2xl font-bold mb-2 relative z-10">
-              Hey {"username"} 👋
-            </div>
             <div className="text-lg relative z-10">
-              {itinerary?.description ? `Welcome To Your "${itinerary?.description}" Adventure!` : 'Select a trip to get started'}
+              {selectedItinerary?.description ? `Welcome To Your "${selectedItinerary?.description}" Adventure!` : 'Select a trip to get started'}
             </div>
             <br />
             <div className="text-sm relative z-10">
-              <span className="text-5xl font-bold">{itinerary?.title}</span>
+              <span className="text-5xl font-bold">{selectedItinerary?.title}</span>
             </div>
             <div className="text-gray-400 text-sm absolute bottom-4 z-10">
               The journey of a thousand miles begins with planning and preparation.
@@ -408,7 +471,7 @@ const Dashboard = () => {
                   </div>
                   <BudgetChart
                     totalBudget={tempBudget}
-                    totalSpent={amountSpent}
+                    totalSpent={totalSpent}
                   />
                 </div>
               )}
@@ -430,7 +493,7 @@ const Dashboard = () => {
                             placeholder="Item name"
                             value={newExpense.title}
                             onChange={(e) => setNewExpense({ ...newExpense, title: e.target.value })}
-                            className="flex-1 bg-transparent border-none outline-none"
+                            className="bg-transparent border-none outline-none w-1/2"
                             onBlur={handleAddExpense}
                             autoFocus
                           />
@@ -439,7 +502,7 @@ const Dashboard = () => {
                             placeholder="Amount"
                             value={newExpense.amount}
                             onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                            className="bg-transparent border-none text-right w-20 font-medium outline-none"
+                            className="bg-transparent border-none text-right w-1/2 font-medium outline-none"
                             onBlur={handleAddExpense}
                           />
                         </div>
@@ -448,51 +511,45 @@ const Dashboard = () => {
                     {expenses.length === 0 && !isAddingExpense ? (
                       <div className="text-center text-gray-500 py-4">No expenses recorded yet</div>
                     ) : (
-                      expenses.map((expense) => (
+                      expenses.map((ex) => (
                         <li
-                          key={expense._id}
+                          key={ex._id}
                           className="flex border-b border-b-[#0001] justify-between group items-center py-2"
                         >
-                          {editingExpense === expense._id ? (
-                            <div className="flex flex-1 gap-0.5 items-center" onBlur={(e) => handleExpenseBlur(e, expense._id)}>
+                          {editingExpense === ex._id ? (
+                            <div className="flex flex-1 gap-0.5 items-center" onBlur={() => handleUpdateExpense(ex._id)}>
                               <input
                                 type="text"
-                                value={expense.title}
-                                onChange={(e) =>
-                                  updateExpenseField(expense._id, "name", e.target.value)
-                                }
+                                value={tempExpense.title || ex.title}
+                                onChange={(e) => setTempExpense(prev => ({ ...prev, title: e.target.value }))}
                                 className="bg-transparent border-none w-2/3 min-w-0 outline-none truncate"
                                 autoFocus
                               />
                               <input
                                 type="number"
-                                value={expense.amount}
-                                onChange={(e) =>
-                                  updateExpenseField(expense._id, "amount", e.target.value)
-                                }
+                                value={tempExpense.amount || ex.amount}
+                                onChange={(e) => setTempExpense(prev => ({ ...prev, amount: e.target.value }))}
                                 className="bg-transparent border-none text-right w-20 font-medium outline-none"
                               />
                             </div>
                           ) : (
                             <>
-                              <span>{expense.title}</span>
+                              <span>{ex.title}</span>
                               <div className="flex gap-2 items-center">
                                 <span className="font-medium">
-                                  ${expense.amount}
+                                  ${ex.amount}
                                 </span>
                                 {isExpanded && (
                                   <div className="flex gap-2 ml-2">
                                     <i
                                       className="cursor-pointer fa-pen-to-square fa-solid hover:text-blue-600"
                                       onClick={() =>
-                                        handleExpenseEdit(expense, expense._id)
+                                        handleExpenseEdit(ex)
                                       }
                                     ></i>
                                     <i
                                       className="cursor-pointer fa-solid fa-trash hover:text-red-600"
-                                      onClick={() =>
-                                        handleDeleteExpense(expense._id)
-                                      }
+                                      onClick={() => handleDeleteExpense(ex)}
                                     ></i>
                                   </div>
                                 )}
@@ -529,16 +586,22 @@ const Dashboard = () => {
                     <div className="bg-transparent h-full w-full">
                       <Calendar
                         selected={range}
-                        onSelect={setRange}
+                        onSelect={(newRange) => {
+                          setRange(newRange);
+                          if (newRange.from && newRange.to) {
+                            handleUpdateDates(newRange);
+                          }
+                        }}
                       />
                     </div>
                   ) : (
                     <>
                       {(range.from && range.to) ? (
                         <div className="relative">
+                          <Spinner />
                           <div className="text-center -translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-1/2">
                             <span className="text-8xl font-bold">{tripStatus.days || '--'}</span>
-                            <p className="text-center">{tripStatus.text || 'Select dates'}</p>
+                            <p className="text-center whitespace-nowrap">{tripStatus.text || 'Select dates'}</p>
                           </div>
                         </div>
                       ) : (
@@ -558,7 +621,7 @@ const Dashboard = () => {
               <i className="fa-location-crosshairs fa-solid mr-2"></i>
               DESTINATION
             </h2>
-            <GMap destinations={destinations || []} />
+            <GMap destinations={destination} />
           </div>
 
           <div className="col-span-1 lg:col-span-3 min-h-[400px]">
@@ -583,8 +646,8 @@ const Dashboard = () => {
                         <input
                           type="text"
                           placeholder="Task title"
-                          value={newTask.title}
-                          onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+                          value={newTask.name}
+                          onChange={(e) => setNewTask(prev => ({ ...prev, name: e.target.value }))}
                           className="border p-2 rounded w-full mb-2"
                         />
                         {newTask.descriptions.map((desc, idx) => (
@@ -634,7 +697,7 @@ const Dashboard = () => {
                     )}
                     {startDate ? (
                       Array.from(new Set(activities.map(task => task.date)))
-                        .sort()
+                        .sort((a, b) => new Date(a) - new Date(b)) // Sort by actual date
                         .map(date => {
                           const dayNumber = getDayNumber(date);
                           return (
@@ -682,7 +745,7 @@ const Dashboard = () => {
                     <div className='flex bg-gray-800 h-6 justify-center rounded-full text-base text-yellow-100 w-6 items-center mr-2'>
                       <i className="fa-plus fa-solid"></i>
                     </div>
-                    New Task
+                    New Activity
                   </button>
                 </div>
               )}
@@ -696,7 +759,7 @@ const Dashboard = () => {
               bg={"bg-gray-800"}
             >
               {(isExpanded) => (
-                <div className="flex flex-col h-full justify-between relative">
+                <div className="flex flex-col h-full justify-between">
                   <ul className="max-h-[22rem] mb-16 overflow-auto space-y-2">
                     {isAddingPackingItem && (
                       <li className="flex border-b border-b-[#fff2] justify-between items-center py-2">
@@ -708,9 +771,10 @@ const Dashboard = () => {
                           />
                           <input
                             type="text"
-                            value={newPackingItem}
-                            onChange={(e) => setNewPackingItem(e.target.value)}
+                            value={newPackingItem.item}
+                            onChange={(e) => setNewPackingItem(prev => ({ ...prev, item: e.target.value }))}
                             onKeyDown={(e) => e.key === 'Enter' && handleAddPackingItem()}
+                            onBlur={() => handleAddPackingItem(newPackingItem)}
                             className="flex-1 bg-transparent border-none text-white outline-none"
                             placeholder="Enter item name"
                             autoFocus
@@ -788,4 +852,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default React.memo(Dashboard); // Memoize the entire component

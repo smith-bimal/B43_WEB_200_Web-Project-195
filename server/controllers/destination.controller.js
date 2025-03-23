@@ -21,19 +21,45 @@ exports.createDestination = async (req, res) => {
 
 exports.getDestinations = async (req, res) => {
   try {
-    const destinations = await Destination.find({ itinerary: req.query.itinerary });
+    if (!req.query.itinerary) {
+      return res.status(400).json({ message: 'Itinerary ID is required' });
+    }
+
+    const destinations = await Destination.find({ itinerary: req.query.itinerary })
+      .populate({
+        path: 'itinerary',
+        select: 'title startDate endDate'
+      })
+      .lean()
+      .exec();
+
+    if (!destinations || destinations.length === 0) {
+      return res.status(404).json({ message: 'No destinations found' });
+    }
+
     res.json(destinations);
   } catch (error) {
+    console.error('Destinations fetch error:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 exports.getDestination = async (req, res) => {
   try {
-    const destination = await Destination.findById(req.params.id);
-    if (!destination) return res.status(404).json({ message: 'Destination not found' });
+    const destination = await Destination.findById(req.params.id)
+      .populate({
+        path: 'itinerary',
+        select: 'title startDate endDate'
+      })
+      .exec();
+
+    if (!destination) {
+      return res.status(404).json({ message: 'Destination not found' });
+    }
+
     res.json(destination);
   } catch (error) {
+    console.error('Destination fetch error:', error);
     res.status(500).json({ error: error.message });
   }
 };
