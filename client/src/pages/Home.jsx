@@ -11,7 +11,7 @@ function Home() {
     <div className="max-w-screen-2xl p-4 md:p-8 font-medium text-gray-900 mx-auto">
       <Navbar />
       <div className="mx-auto p-4 relative">
-        <main className="mt-8 md:mt-16">
+        <main className="mt-8">
           <div className="relative">
             <div className="absolute bottom-0 left-0 w-full h-full md:h-1/2 bg-purple-100 rounded-lg z-0">
               <img alt="Decorative background wave" className="absolute bottom-0 left-0 w-full h-full object-cover opacity-10" src="pngs/pngegg (2).png" />
@@ -40,8 +40,8 @@ function Home() {
                   </i>
                 </div>
               </div>
-              <div className="w-full md:w-1/2 min-w-xs p-4 md:p-8">
-                <img alt="Mobile app screenshot showing trip details" className="mx-auto rounded-lg md:scale-105" src="erasebg-transformed.png" />
+              <div className="w-22 md:w-1/2 min-w-xs p-4 md:p-8">
+                <img alt="Mobile app screenshot showing trip details" className="mx-auto md:w-[24rem]" src="Hero.png" />
               </div>
             </div>
           </div>
@@ -87,9 +87,9 @@ function Home() {
             </div>
             <div className="lg:w-1/2 flex justify-center relative">
               <div className="relative flex items-end">
-                <img alt="Smartphone displaying a travel app with a tour to Paris" className="h-[400px] md:h-[600px] relative z-[3]" src="freepik__background__77958.png" />
-                <img alt="Smartphone displaying a travel app with a tour to Paris" className="h-[375px] md:h-[575px] relative z-[2] -ml-16 md:-ml-32 hidden md:block" src="freepik__background__77958.png" />
-                <img alt="Smartphone displaying a travel app with a tour to Paris" className="h-[350px] md:h-[550px] relative -ml-16 md:-ml-32 hidden md:block" src="freepik__background__77958.png" />
+                <img alt="Smartphone displaying a travel app with a tour to Paris" className="h-[400px] md:h-[600px] relative z-[3]" src="selection2.png" />
+                <img alt="Smartphone displaying a travel app with a tour to Paris" className="h-[375px] md:h-[575px] relative z-[2] -ml-16 md:-ml-32 hidden md:block" src="selection3.png" />
+                <img alt="Smartphone displaying a travel app with a tour to Paris" className="h-[350px] md:h-[550px] relative -ml-16 md:-ml-32 hidden md:block" src="selection1.png" />
               </div>
             </div>
           </div>
@@ -109,7 +109,7 @@ function Home() {
                 </small>
               </div>
             </div>
-            <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-16">
+            <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-16">
               <QualityCard color={"bg-purple-100"} icon={"fas fa-mobile-alt"} head={"CLEAR & SIMPLE APP INTERFACE"} body={"Buy a tour in just two clicks. It's possible with our app"} />
               <QualityCard color={"bg-gray-100"} icon={"fas fa-gift"} head={"THE MOBILE APP IS FREE FOR YOU"} body={"You can use the application without a paid subscription"} />
               <QualityCard color={"bg-green-100"} icon={"fas fa-route"} head={"A LOT OF COOL TOURS & ROUTES"} body={"You can choose the tour you are interested in with our app"} />
@@ -157,7 +157,7 @@ function Home() {
             </div>
 
             <div className="absolute z-10 right-0 xl:right-1/2 xl:translate-x-1/2 md:block hidden">
-              <img alt="Mobile app interface" className="rounded-lg max-h-[400px] md:max-h-[650px]" src="freepik__background__77958.png" />
+              <img alt="Mobile app interface" className="rounded-lg max-h-[400px] md:max-h-[650px]" src="community.png" />
             </div>
 
             <div className="flex flex-wrap justify-center gap-4 mt-4">
