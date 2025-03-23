@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useCallback } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
 import BudgetChart from "../components/BudgetChart";
@@ -10,7 +10,7 @@ import 'react-day-picker/dist/style.css';
 import ActivityTask from "../components/ActivityTask";
 import { useItineraryData } from '../hooks/useItineraryData';
 import instance from '../config/axios';
-import { addExpense, addPackings, addTasks, deleteExpense, deletePacking, refetchTasks, updateBudget, updateExpense, updatePacking, updateTask } from "../hooks/useApiCalls";
+import { addExpense, addPackings, addTasks, deleteExpense, deletePacking, updateBudget, updateExpense, updatePacking, updateTask } from "../hooks/useApiCalls";
 
 const Dashboard = () => {
   const { data, loading, error } = useItineraryData();
@@ -73,16 +73,38 @@ const Dashboard = () => {
     }
   }, [data]);
 
-  // Fix trip status calculation
   const calculateTripStatus = useCallback(() => {
     if (!startDate || !endDate) return;
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    
     const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
 
-    const daysTillStart = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
-    const daysTillEnd = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+    // Check if today is start date or end date
+    if (today.getTime() === start.getTime()) {
+      setTripStatus({
+        text: 'Trip starts today!',
+        days: 0
+      });
+      return;
+    }
+
+    if (today.getTime() === end.getTime()) {
+      setTripStatus({
+        text: 'Trip ends today!',
+        days: 0
+      });
+      return;
+    }
+
+    // Calculate differences in days
+    const daysTillStart = Math.floor((start - today) / (1000 * 60 * 60 * 24));
+    const daysTillEnd = Math.floor((end - today) / (1000 * 60 * 60 * 24));
 
     if (daysTillStart > 0) {
       setTripStatus({
@@ -92,7 +114,7 @@ const Dashboard = () => {
     } else if (daysTillEnd >= 0) {
       setTripStatus({
         text: 'Days to end',
-        days: daysTillEnd + 1
+        days: daysTillEnd
       });
     } else {
       setTripStatus({
@@ -157,38 +179,30 @@ const Dashboard = () => {
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
-  const updateActivityTasks = async () => {
-    await refetchTasks(selectedItinerary._id);
-    console.log('Tasks updated successfully');
-  }
-
   const handleUpdateExpense = async (expenseId) => {
     try {
       if (!tempExpense.title || !tempExpense.amount) return;
 
-      await updateExpense(expenseId, tempExpense);
-      console.log('Expense updated successfully!');
-
-      // Update local state
+      const response = await updateExpense(expenseId, tempExpense);
+      console.log('💰 Expense updated.');
+      
+      // Update local state with the updated expense
       setExpenses(prevExpenses =>
         prevExpenses.map(expense =>
-          expense._id === expenseId
-            ? { ...expense, title: tempExpense.title, amount: parseFloat(tempExpense.amount) }
-            : expense
+          expense._id === expenseId ? response.data : expense
         )
       );
 
       // Update total spent
-      setTotalSpent(prevTotal => {
+      setTotalSpent(prev => {
         const oldExpense = expenses.find(e => e._id === expenseId);
-        return prevTotal - oldExpense.amount + parseFloat(tempExpense.amount);
+        return prev - oldExpense.amount + parseFloat(response.data.amount);
       });
 
-      // Reset states
       setTempExpense({ title: '', amount: '' });
       setEditingExpense(null);
     } catch (err) {
-      console.error('Failed to update expense:', err);
+      console.error('❌ Failed to update expense:', err);
     }
   };
 
@@ -221,13 +235,16 @@ const Dashboard = () => {
     if (!expense?._id) return;
     try {
       await deleteExpense(expense._id);
-      console.log('Expense deleted successfully!');
-      // Update local state after successful deletion
+      console.log('🗑️ Expense deleted');
+      
+      // First update expenses
       setExpenses(prevExpenses => prevExpenses.filter(e => e._id !== expense._id));
-      // Update total spent
-      setTotalSpent(prevTotal => prevTotal - expense.amount);
+      
+      // Then update total spent
+      setTotalSpent(prev => prev - expense.amount);
+      
     } catch (err) {
-      console.error('Failed to delete expense:', err);
+      console.error('❌ Failed to delete expense:', err);
     }
   }, []);
 
@@ -235,18 +252,26 @@ const Dashboard = () => {
     if (!newExpense.title || !newExpense.amount) return;
 
     try {
-      await addExpense({
+      const response = await addExpense({
         title: newExpense.title,
         amount: parseFloat(newExpense.amount),
         itinerary: selectedItinerary._id
       });
-      console.log('New expense added successfully!');
+      
+      console.log('✨ New expense added.');
+      
+      // Update local state with the new expense
+      setExpenses(prevExpenses => [...prevExpenses, response.data]);
+      
+      // Update total spent
+      setTotalSpent(prev => prev + parseFloat(newExpense.amount));
+      
       setNewExpense({ title: '', amount: '' });
       setIsAddingExpense(false);
     } catch (err) {
-      console.error('Failed to add expense:', err);
+      console.error('❌ Failed to add expense:', err);
     }
-  }, [newExpense, addExpense]);
+  }, [newExpense, selectedItinerary?._id]);
 
   const handleAddPackingItem = async () => {
     try {
@@ -255,28 +280,16 @@ const Dashboard = () => {
           item: newPackingItem.item.trim(),
           itinerary: selectedItinerary._id
         });
-        console.log('New packing item added successfully!');
+        console.log('📦 New packing item added.');
         // Update local state with the new item from the response
         setPackingItems(prevItems => [...prevItems, response.data]);
         setNewPackingItem({ item: '' });
         setIsAddingPackingItem(false);
       }
     } catch (e) {
-      console.error('Failed to add packing item:', e);
+      console.error('❌ Failed to add packing item:', e);
     }
   }
-
-  const handleExpenseBlur = (e) => {
-    const currentTarget = e.currentTarget;
-    requestAnimationFrame(() => {
-      if (!currentTarget.contains(document.activeElement)) {
-        setEditingExpense(null);
-        if (isAddingExpense) {
-          handleAddExpense();
-        }
-      }
-    });
-  };
 
   const handleCheckboxChange = async (itemId, currentStatus) => {
     try {
@@ -294,11 +307,12 @@ const Dashboard = () => {
   const handleDeletePackingItem = async (itemId) => {
     try {
       await deletePacking(itemId);
-      console.log('Packing item deleted successfully!');
+      const deletedItem = packingItems.find(i => i._id === itemId);
+      console.log('🗑️ Packing item deleted.');
       // Update local state after successful API call
       setPackingItems(prevItems => prevItems.filter(i => i._id !== itemId));
     } catch (err) {
-      console.error('Failed to delete packing item:', err);
+      console.error('❌ Failed to delete packing item:', err);
     }
   };
 
@@ -310,7 +324,7 @@ const Dashboard = () => {
       }
 
       await updateTask(updatedTask._id, updatedTask);
-      console.log('Task updated successfully!');
+      console.log('📝 Task updated.');
       // Update local state after successful update
       setActivities(prevActivities =>
         prevActivities.map(activity =>
@@ -318,20 +332,21 @@ const Dashboard = () => {
         )
       );
     } catch (err) {
-      console.error('Failed to update task:', err);
+      console.error('❌ Failed to update task:', err);
     }
   };
 
   const handleDeleteTask = async (taskId) => {
     try {
       await instance.delete(`/activities/${taskId}`);
-      console.log('Task deleted successfully!');
+      const deletedTask = activities.find(a => a._id === taskId);
+      console.log('🗑️ Task deleted.');
       // Update local state after successful deletion
       setActivities(prevActivities =>
         prevActivities.filter(activity => activity._id !== taskId)
       );
     } catch (err) {
-      console.error('Failed to delete task:', err);
+      console.error('❌ Failed to delete task:', err);
     }
   };
 
@@ -344,13 +359,13 @@ const Dashboard = () => {
           descriptions: newTask.descriptions,
           itinerary: selectedItinerary._id
         });
-        console.log('New task added successfully!');
+        console.log('✨ New task added.');
         // Update local state with new task
         setActivities(prevActivities => [...prevActivities, response.data]);
         setNewTask({ name: '', date: '', descriptions: [''] });
         setIsAddingTask(false);
       } catch (err) {
-        console.error('Failed to add task:', err);
+        console.error('❌ Failed to add task:', err);
       }
     }
   };
@@ -380,12 +395,12 @@ const Dashboard = () => {
         startDate: newRange.from,
         endDate: newRange.to
       });
-      console.log('Trip dates updated successfully!');
+      console.log('📅 Trip dates updated.');
       setStartDate(newRange.from);
       setEndDate(newRange.to);
       setRange(newRange);
     } catch (err) {
-      console.error('Failed to update dates:', err);
+      console.error('❌ Failed to update dates:', err);
     }
   };
 
@@ -600,7 +615,7 @@ const Dashboard = () => {
                         <div className="relative">
                           <Spinner />
                           <div className="text-center -translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-1/2">
-                            <span className="text-8xl font-bold">{tripStatus.days || '--'}</span>
+                            <span className="text-8xl font-bold">{tripStatus.days}</span>
                             <p className="text-center whitespace-nowrap">{tripStatus.text || 'Select dates'}</p>
                           </div>
                         </div>

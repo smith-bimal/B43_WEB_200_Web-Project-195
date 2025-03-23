@@ -12,7 +12,6 @@ export const useItineraryData = () => {
         setLoading(true);
         const response = await instance.get(`/itineraries`);
         setData(response.data);
-        console.log(response.data);
       } catch (err) {
         setError(err.message);
       } finally {

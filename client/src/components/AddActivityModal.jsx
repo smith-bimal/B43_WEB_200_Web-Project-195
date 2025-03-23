@@ -50,7 +50,7 @@ function AddActivityModal({ itineraryId, onClose, onAdd }) {
             onChange={(e) => setTime(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
           />
-          <button type="submit" className="bg-orange-500 text-white py-2 px-4 rounded">Add</button>
+          <button type="submit" className="bg-gray-800 text-white py-2 px-4 rounded">Add</button>
         </form>
         <button onClick={onClose} className="mt-4 text-gray-500 hover:underline">Close</button>
       </div>
