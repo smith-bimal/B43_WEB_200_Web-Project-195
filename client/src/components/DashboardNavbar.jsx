@@ -1,9 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router';
 import { useAuth } from './AuthProvider';
 
 const DashboardNavbar = () => {
     const [activeNav, setActiveNav] = useState({ dashboard: true, trips: false, archives: false });
+
+    useEffect(() => {
+        if (window.location.pathname == "/dashboard") {
+            setActiveNav({ dashboard: true, trips: false, archives: false })
+        } else if (window.location.pathname == "/trips") {
+            setActiveNav({ dashboard: false, trips: true, archives: false })
+        } else if (window.location.pathname == "/archive") {
+            setActiveNav({ dashboard: false, trips: false, archives: true })
+        }
+    }, []);
+
+
     const { user, logout } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -13,14 +25,14 @@ const DashboardNavbar = () => {
 
             <div className="flex justify-center gap-2 items-center">
                 <div className="flex bg-gray-100 border-2 border-gray-200 h-14 rounded-full gap-12 items-center px-6 relative">
-                    <div className={`w-1/3 absolute bg-[#1E2939] border-2 scale-y-115 border-[#1E2939] h-full top-0 rounded-full z-0 transition-all duration-150 ${activeNav.dashboard ? "left-0" : activeNav.trips ? "left-[33%]" : "left-[67%]"}`}></div>
-                    <NavLink className={`z-10 w-20 text-center ${activeNav.dashboard && "text-white"}`} to="/dashboard" onClick={() => setActiveNav({ dashboard: true, trips: false, archives: false })}>
+                    <div className={`w-1/3 absolute bg-[#1E2939] border-2 scale-y-115 border-[#1E2939] h-full top-0 rounded-full z-0 ${activeNav.dashboard ? "left-0" : activeNav.trips ? "left-[33%]" : "left-[67%]"}`}></div>
+                    <NavLink className={`z-10 w-20 text-center ${activeNav.dashboard && "text-white"}`} to="/dashboard">
                         Dashboard
                     </NavLink>
-                    <NavLink className={`z-10 w-20 text-center ${activeNav.trips && "text-white"}`} to="/trips" onClick={() => setActiveNav({ dashboard: false, trips: true, archives: false })}>
+                    <NavLink className={`z-10 w-20 text-center ${activeNav.trips && "text-white"}`} to="/trips">
                         Your Trips
                     </NavLink>
-                    <NavLink className={`z-10 w-20 text-center ${activeNav.archives && "text-white"}`} to="/archive" onClick={() => setActiveNav({ dashboard: false, trips: false, archives: true })}>
+                    <NavLink className={`z-10 w-20 text-center ${activeNav.archives && "text-white"}`} to="/archive">
                         Archive
                     </NavLink>
                 </div>

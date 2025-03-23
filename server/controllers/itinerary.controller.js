@@ -14,7 +14,7 @@ exports.createItinerary = async (req, res) => {
 
 exports.getItineraries = async (req, res) => {
   try {
-    const itineraries = await Itinerary.find({ user: req.userId });
+    const itineraries = await Itinerary.find({ user: req.userId }).populate("activities").populate("destination").populate("expenses").populate("packings");
     res.json(itineraries);
   } catch (error) {
     res.status(500).json({ error: error.message });

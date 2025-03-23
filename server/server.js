@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db.config');
+const cron = require('node-cron');
+const updateItineraryStatuses = require('./utils/statusUpdater');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -16,7 +18,12 @@ app.use('/api/activities', require('./routes/activity.routes'));
 app.use('/api/expenses', require('./routes/expense.routes'));
 app.use('/api/packing', require('./routes/packing.routes'));
 
+// Run the status update every day at midnight
+cron.schedule('0 0 * * *', () => {
+  updateItineraryStatuses();
+});
+
 app.listen(PORT, () => {
     connectDB();
     console.log(`Server running on port ${PORT}`);
-}) 
+})

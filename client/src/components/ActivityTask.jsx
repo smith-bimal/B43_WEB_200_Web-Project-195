@@ -4,11 +4,18 @@ const ActivityTask = ({ task, isExpanded, onEdit, onDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedTask, setEditedTask] = useState({
         ...task,
-        descriptions: task.descriptions || [] // Provide default empty array
+        descriptions: Array.isArray(task.descriptions) ? task.descriptions : [''], // Ensure descriptions is always an array
+        date: task.date || new Date().toISOString().split('T')[0]
     });
 
     const handleSave = () => {
-        onEdit(editedTask);
+        // Filter out empty descriptions before saving
+        const filteredDescriptions = editedTask.descriptions.filter(desc => desc.trim() !== '');
+        const updatedTask = {
+            ...editedTask,
+            descriptions: filteredDescriptions.length > 0 ? filteredDescriptions : ['']
+        };
+        onEdit(updatedTask);
         setIsEditing(false);
     };
 
@@ -17,9 +24,15 @@ const ActivityTask = ({ task, isExpanded, onEdit, onDelete }) => {
             {isEditing ? (
                 <div className="bg-white/50 p-4 rounded-lg">
                     <input
+                        type="date"
+                        value={new Date(editedTask.date).toISOString().split('T')[0]}
+                        onChange={(e) => setEditedTask(prev => ({ ...prev, date: e.target.value }))}
+                        className="border p-2 rounded w-full mb-2"
+                    />
+                    <input
                         type="text"
-                        value={editedTask.title}
-                        onChange={(e) => setEditedTask(prev => ({ ...prev, title: e.target.value }))}
+                        value={editedTask.name}
+                        onChange={(e) => setEditedTask(prev => ({ ...prev, name: e.target.value }))}
                         className="border p-2 rounded w-full mb-2"
                     />
                     {editedTask.descriptions.map((desc, idx) => (
@@ -62,7 +75,7 @@ const ActivityTask = ({ task, isExpanded, onEdit, onDelete }) => {
             ) : (
                 <div className="flex justify-between group items-start">
                     <div>
-                        <h3 className="font-bold">{task.title}</h3>
+                        <h3 className="font-bold">{task.name}</h3>
                         <ul className="list-disc text-gray-500 text-sm ml-4 pl-4">
                             {(task.descriptions || []).map((desc, index) => (
                                 <li key={index}>{desc}</li>

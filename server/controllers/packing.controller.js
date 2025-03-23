@@ -4,7 +4,7 @@ const Itinerary = require('../models/Itinerary.model');
 exports.getAllItems = async (req, res) => {
     try {
         const items = await Packing.find({ itinerary: req.params.itineraryId });
-        res.json(items);
+        res.status(200).json(items);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -18,10 +18,10 @@ exports.addItem = async (req, res) => {
         // Add packing item reference to itinerary
         await Itinerary.findByIdAndUpdate(
             req.body.itinerary,
-            { $push: { packingItems: savedItem._id } }
+            { $push: { packings: savedItem._id } }
         );
 
-        res.json(savedItem);
+        res.status(201).json(savedItem);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
