@@ -14,12 +14,12 @@ import instance from '../config/axios';
 import { addExpense, addPackings, addTasks, deleteExpense, deletePacking, updateBudget, updateExpense, updatePacking, updateTask } from "../hooks/useApiCalls";
 import DownloadPDFButton from "../components/DownloadPDFButton";
 import PDFErrorBoundary from '../components/PDFErrorBoundary';
+import Activities from "../components/Activities";
 
 const Dashboard = () => {
   const { data: allData, loading, error } = useItineraryData();
   const [data, setData] = useState([]);
 
-  // Filter out completed itineraries
   useEffect(() => {
     if (allData) {
       const filteredData = allData.filter(itinerary => {
@@ -37,26 +37,20 @@ const Dashboard = () => {
     }
   }, [allData]);
 
-  // Add new useEffect for handling localStorage and initial itinerary selection
   useEffect(() => {
     if (data && data.length > 0) {
-      // Try to get previously selected itinerary from localStorage
       const savedItineraryId = localStorage.getItem('selectedItineraryId');
       let initialItinerary;
 
       if (savedItineraryId) {
-        // Find the saved itinerary in the current data
         initialItinerary = data.find(it => it._id === savedItineraryId);
       }
 
-      // If no saved itinerary found or it doesn't exist in current data, use first one
       if (!initialItinerary) {
         initialItinerary = data[0];
-        // Update localStorage with the new selection
         localStorage.setItem('selectedItineraryId', initialItinerary._id);
       }
 
-      // Set the selected itinerary and initialize related states
       setSelectedItinerary(initialItinerary);
       setTempBudget(initialItinerary.budget);
       setExpenses(initialItinerary.expenses);
@@ -123,7 +117,6 @@ const Dashboard = () => {
     const end = new Date(endDate);
     end.setHours(0, 0, 0, 0);
 
-    // Check if today is start date or end date
     if (today.getTime() === start.getTime()) {
       setTripStatus({
         text: 'Trip starts today!',
@@ -140,7 +133,6 @@ const Dashboard = () => {
       return;
     }
 
-    // Calculate differences in days
     const daysTillStart = Math.floor((start - today) / (1000 * 60 * 60 * 24));
     const daysTillEnd = Math.floor((end - today) / (1000 * 60 * 60 * 24));
 
@@ -166,7 +158,6 @@ const Dashboard = () => {
     calculateTripStatus();
   }, [calculateTripStatus]);
 
-  // Fix budget save handler
   const handleBudgetSave = async () => {
     if (!selectedItinerary?._id) return;
 
@@ -179,17 +170,15 @@ const Dashboard = () => {
     }
   };
 
-  // Fix itinerary selection
   const handleItinerarySelect = useCallback((id) => {
     const selected = data?.find(it => it._id === id);
     if (selected) {
       setSelectedItinerary(selected);
-      localStorage.setItem('selectedItineraryId', selected._id);  // Save to localStorage
+      localStorage.setItem('selectedItineraryId', selected._id);
       setTempBudget(selected.budget);
       setExpenses(selected.expenses);
       setTotalSpent(selected.expenses.reduce((acc, curr) => acc + curr.amount, 0));
 
-      // Update dates
       if (selected.startDate && selected.endDate) {
         const startDateObj = new Date(selected.startDate);
         const endDateObj = new Date(selected.endDate);
@@ -202,13 +191,11 @@ const Dashboard = () => {
         setEndDate(null);
       }
 
-      // Update destination
       setDestination({
         latitude: selected.destination?.coordinates?.latitude || 0,
         longitude: selected.destination?.coordinates?.longitude || 0
       });
 
-      // Update activities and packing list
       setActivities(selected.activities || []);
       setPackingItems(selected.packings || []);
 
@@ -225,14 +212,12 @@ const Dashboard = () => {
       const response = await updateExpense(expenseId, tempExpense);
       console.log('💰 Expense updated.');
 
-      // Update local state with the updated expense
       setExpenses(prevExpenses =>
         prevExpenses.map(expense =>
           expense._id === expenseId ? response.data : expense
         )
       );
 
-      // Update total spent
       setTotalSpent(prev => {
         const oldExpense = expenses.find(e => e._id === expenseId);
         return prev - oldExpense.amount + parseFloat(response.data.amount);
@@ -250,7 +235,6 @@ const Dashboard = () => {
       const item = packingItems.find(i => i._id === itemId);
       if (!item) return;
       await updatePacking(itemId, { ...item, name: newName });
-      // Update local state after successful API call
       setPackingItems(prevItems =>
         prevItems.map(i => i._id === itemId ? { ...i, item: newName } : i)
       );
@@ -276,10 +260,8 @@ const Dashboard = () => {
       await deleteExpense(expense._id);
       console.log('🗑️ Expense deleted');
 
-      // First update expenses
       setExpenses(prevExpenses => prevExpenses.filter(e => e._id !== expense._id));
 
-      // Then update total spent
       setTotalSpent(prev => prev - expense.amount);
 
     } catch (err) {
@@ -299,10 +281,8 @@ const Dashboard = () => {
 
       console.log('✨ New expense added.');
 
-      // Update local state with the new expense
       setExpenses(prevExpenses => [...prevExpenses, response.data]);
 
-      // Update total spent
       setTotalSpent(prev => prev + parseFloat(newExpense.amount));
 
       setNewExpense({ title: '', amount: '' });
@@ -320,7 +300,6 @@ const Dashboard = () => {
           itinerary: selectedItinerary._id
         });
         console.log('📦 New packing item added.');
-        // Update local state with the new item from the response
         setPackingItems(prevItems => [...prevItems, response.data]);
         setNewPackingItem({ item: '' });
         setIsAddingPackingItem(false);
@@ -683,7 +662,9 @@ const Dashboard = () => {
                             </div>
                           ) : (
                             <>
-                              <span>{ex.title}</span>
+                              <div className="flex flex-1 gap-0.5 items-center">
+                                <span>{ex.title}</span>
+                              </div>
                               <div className="flex gap-2 items-center">
                                 <span className="font-medium">
                                   ${ex.amount}
@@ -692,9 +673,7 @@ const Dashboard = () => {
                                   <div className="flex gap-2 ml-2">
                                     <i
                                       className="cursor-pointer fa-pen-to-square fa-solid hover:text-blue-600"
-                                      onClick={() =>
-                                        handleExpenseEdit(ex)
-                                      }
+                                      onClick={() => handleExpenseEdit(ex)}
                                     ></i>
                                     <i
                                       className="cursor-pointer fa-solid fa-trash hover:text-red-600"
@@ -778,7 +757,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Activities Card - Full width on mobile */}
+          {/* Activities Card */}
           <div className="col-span-1 md:col-span-2 lg:col-span-3">
             <DashboardCard
               heading={"ACTIVITY"}
@@ -788,117 +767,19 @@ const Dashboard = () => {
             >
               {(isExpanded) => (
                 <div>
-                  <div className="max-h-[360px] overflow-auto pr-2">
-                    {isAddingTask && (
-                      <div className="bg-white/50 p-4 rounded-lg mb-6">
-                        <input
-                          type="date"
-                          value={newTask.date}
-                          onChange={(e) => setNewTask(prev => ({ ...prev, date: e.target.value }))}
-                          className="border p-2 rounded w-full mb-2"
-                          min={startDate}
-                          max={endDate}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Task title"
-                          value={newTask.name}
-                          onChange={(e) => setNewTask(prev => ({ ...prev, name: e.target.value }))}
-                          className="border p-2 rounded w-full mb-2"
-                        />
-                        {newTask.descriptions.map((desc, idx) => (
-                          <div key={`new-task-desc-${idx}`} className="flex gap-2 mb-2">
-                            <input
-                              type="text"
-                              placeholder="Description"
-                              value={desc}
-                              onChange={(e) => {
-                                const newDesc = [...newTask.descriptions];
-                                newDesc[idx] = e.target.value;
-                                setNewTask(prev => ({ ...prev, descriptions: newDesc }));
-                              }}
-                              className="flex-1 border p-2 rounded"
-                            />
-                            <button
-                              onClick={() => {
-                                const newDesc = [...newTask.descriptions];
-                                if (idx === newTask.descriptions.length - 1) {
-                                  newDesc.push('');
-                                } else {
-                                  newDesc.splice(idx, 1);
-                                }
-                                setNewTask(prev => ({ ...prev, descriptions: newDesc }));
-                              }}
-                              className="bg-amber-300 rounded text-white px-3 py-1"
-                            >
-                              {idx === newTask.descriptions.length - 1 ? '+' : '×'}
-                            </button>
-                          </div>
-                        ))}
-                        <div className="flex justify-end gap-2 mt-2">
-                          <button
-                            onClick={() => setIsAddingTask(false)}
-                            className="text-gray-600 px-4 py-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={handleAddTask}
-                            className="bg-amber-300 rounded text-white px-4 py-2"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    {startDate ? (
-                      activities.length === 0 ? (
-                        <div className="text-gray-500 py-4 text-center">
-                          No activities planned yet
-                        </div>
-                      ) : (
-                        Array.from(new Set(activities.map(task => task.date)))
-                          .sort((a, b) => new Date(a) - new Date(b))
-                          .map(date => {
-                            const dayNumber = getDayNumber(date);
-                            return (
-                              <div key={date} className="mb-6">
-                                <div className="flex gap-4 items-center mb-4">
-                                  <span className="bg-[#0005] rounded-full font-semibold px-3 py-2">
-                                    Day {dayNumber}
-                                  </span>
-                                  <span className="text-gray-500 text-sm">
-                                    {new Date(date).toLocaleDateString('en-US', {
-                                      weekday: 'long',
-                                      month: 'long',
-                                      day: 'numeric'
-                                    })}
-                                  </span>
-                                </div>
-                                {activities
-                                  .filter(task => task.date === date)
-                                  .map(task => (
-                                    <ActivityTask
-                                      key={task._id}
-                                      task={{
-                                        ...task,
-                                        title: task.name,
-                                        descriptions: task.descriptions || []
-                                      }}
-                                      onEdit={handleEditTask}
-                                      onDelete={handleDeleteTask}
-                                    />
-                                  ))}
-                              </div>
-                            );
-                          })
-                      )
-                    ) : (
-                      <div className="text-gray-500 py-4">
-                        Please set trip dates first
-                      </div>
-                    )}
-                  </div>
+                  <Activities 
+                    activities={activities}
+                    startDate={startDate}
+                    isExpanded={isExpanded}
+                    getDayNumber={getDayNumber}
+                    handleEditTask={handleEditTask}
+                    handleDeleteTask={handleDeleteTask}
+                    isAddingTask={isAddingTask}
+                    newTask={newTask}
+                    setNewTask={setNewTask}
+                    setIsAddingTask={setIsAddingTask}
+                    handleAddTask={handleAddTask}
+                  />
                   <button
                     className="flex text-gray-800 text-xl absolute bottom-4 cursor-pointer items-center mt-4 py-2"
                     onClick={() => setIsAddingTask(true)}
@@ -1014,5 +895,4 @@ const Dashboard = () => {
     </main>
   );
 };
-
 export default React.memo(Dashboard);
