@@ -1,7 +1,5 @@
-
-
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import instance from '../config/axios';
 
 const AuthContext = createContext(null);
@@ -12,6 +10,7 @@ const AuthLoader = ({ children }) => {
     const [isLoaded, setIsLoaded] = useState(false);
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const verifyToken = () => {
         const token = localStorage.getItem('token');
@@ -47,16 +46,19 @@ const AuthLoader = ({ children }) => {
 
         checkAuth();
 
+        // Only check token expiration on protected routes
+        const protectedRoutes = ['/dashboard', '/trips', '/archive'];
+        const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
         
         const tokenCheckInterval = setInterval(() => {
-            if (!verifyToken()) {
+            if (isProtectedRoute && !verifyToken()) {
                 localStorage.clear();
                 navigate('/login', { replace: true });
             }
         }, 60000);
 
         return () => clearInterval(tokenCheckInterval);
-    }, [navigate]);
+    }, [navigate, location.pathname]);
 
     
     if (!isLoaded) return null;

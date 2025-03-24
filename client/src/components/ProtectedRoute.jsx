@@ -1,11 +1,13 @@
-import { Navigate } from 'react-router';
+import { Navigate, useLocation } from 'react-router';
 import { useAuth } from './AuthProvider';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
+  const location = useLocation();
   
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Save the attempted URL for redirecting after login
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return children;
