@@ -29,6 +29,9 @@ tripmate/
 │   └── config/
 ```
 
+## Video Walkthrough of the project
+[Check the Video](https://youtu.be/NhqkFamklek)
+
 ## Features
 - **User Authentication**
   - Secure signup and login functionality
