@@ -3,6 +3,7 @@ import { LoadScript, StandaloneSearchBox } from '@react-google-maps/api';
 import instance from '../config/axios';
 import { addDestination, addItinerary } from '../hooks/useApiCalls';
 import { getTripStatus } from '../utils/tripStatus';
+import { useNavigate } from 'react-router';
 
 const libraries = ["places"];
 
@@ -61,6 +62,7 @@ const AddNewTripModal = ({ onClose }) => {
     const onLoad = ref => setSearchBox(ref);
     const onUnmount = () => setSearchBox(null);
 
+    const navigate = useNavigate();
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -94,7 +96,7 @@ const AddNewTripModal = ({ onClose }) => {
             });
 
             onClose();
-            window.location.reload();
+            navigate('/trips');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create trip');
         } finally {

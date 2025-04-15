@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { useNavigate } from 'react-router';
+
+const navigate = useNavigate();
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_BASE_URL,
@@ -35,7 +38,7 @@ instance.interceptors.response.use(
 
           if (isExpired) {
             localStorage.clear();
-            window.location.href = '/login';
+            navigate('/login');
             return Promise.reject(error);
           }
 
